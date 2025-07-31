@@ -7,8 +7,6 @@ export const taskValidation = {
     duration: Joi.string().pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/).required(),
     reward: Joi.number().integer().min(1).required(),
     status: Joi.string().valid('active', 'inactive').default('active'),
-    created_by: Joi.string().required(),
-    updated_by: Joi.string().required(),
   }),
 
   update: Joi.object({

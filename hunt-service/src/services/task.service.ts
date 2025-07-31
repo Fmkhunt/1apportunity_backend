@@ -1,13 +1,13 @@
-import { db } from '@/config/database';
-import { tasksTable } from '@/models/schema';
+import { db } from '../config/database';
+import { tasksTable } from '../models/schema';
 import { eq, and, or, like, desc, asc, sql } from 'drizzle-orm';
-import { AppError } from '@/utils/AppError';
+import { AppError } from '../utils/AppError';
 import {
   TTask,
   TCreateTaskData,
   TUpdateTaskData,
   TTaskQueryParams,
-} from '@/types';
+} from '../types';
 
 export class TaskService {
   /**
@@ -35,13 +35,13 @@ export class TaskService {
    */
   static async getAll(queryParams: TTaskQueryParams): Promise<{
     tasks: TTask[];
-    total: number;
+    totalRecords: number;
     page: number;
     limit: number;
     totalPages: number;
   }> {
     try {
-      const { page = 1, limit = 10, status, search } = queryParams;
+      const { page = 1, limit = 10, status, search, task_type } = queryParams;
       const offset = (page - 1) * limit;
 
       // Build where conditions
@@ -49,6 +49,10 @@ export class TaskService {
 
       if (status) {
         whereConditions.push(eq(tasksTable.status, status));
+      }
+
+      if (task_type) {
+        whereConditions.push(eq(tasksTable.task_type, task_type));
       }
 
       if (search) {
@@ -83,7 +87,7 @@ export class TaskService {
 
       return {
         tasks: tasks as TTask[],
-        total: count,
+        totalRecords: count,
         page,
         limit,
         totalPages,
@@ -194,7 +198,6 @@ export class TaskService {
         .update(tasksTable)
         .set({
           status: newStatus,
-          updated_by: updatedBy,
           updated_at: new Date(),
         })
         .where(eq(tasksTable.id, taskId))

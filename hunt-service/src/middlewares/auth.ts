@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { TAuthenticatedRequest, TJwtPayload, TUsers } from '@/types';
-import { AppError } from '@/utils/AppError';
-import { TokenService } from '@/services/token.service';
+import { TAuthenticatedRequest, TJwtPayload, TAuthenticatedAdminRequest } from '../types';
+import { AppError } from '../utils/AppError';
+import { TokenService } from '../services/token.service';
 
 /**
  * Authenticate JWT token middleware
@@ -22,6 +22,9 @@ export const authenticateJWT = async (
 
     // Verify token
     const decoded = TokenService.verifyToken(token);
+    if(decoded.role !== 'user'){
+      throw new AppError('Invalid user', 401);
+    }
 
     if (decoded.tokenType !== 'accessToken') {
       throw new AppError('Invalid token type', 401);
@@ -68,7 +71,45 @@ export const authenticateJWT = async (
 //     }
 //   };
 // };
+export const authenticateAdminToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const authHeader = req.headers.authorization;
 
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new AppError('Access token is required', 401);
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    // Import AdminAuthService dynamically to avoid circular dependency
+
+    // Verify admin token
+    const decoded = TokenService.verifyAdminToken(token);
+
+    if (decoded.tokenType !== 'accessToken') {
+      throw new AppError('Invalid token type', 401);
+    }
+
+    // Check if admin exists
+    // const admin = await TokenService.getAdminById(decoded.adminId);
+    // if (!admin) {
+    //   throw new AppError('Admin not found', 401);
+    // }
+    // Add admin to request
+    (req as TAuthenticatedAdminRequest).admin = decoded;
+    next();
+  } catch (error) {
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(new AppError('Admin authentication failed', 401));
+    }
+  }
+};
 /**
  * Optional authentication middleware (doesn't fail if no token)
  */

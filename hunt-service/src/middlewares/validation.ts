@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { Schema } from 'joi';
-import { ValidationError } from '@/utils/AppError';
-import { ResponseHandler } from '@/utils/responseHandler';
+import { ValidationError } from '../utils/AppError';
+import { ResponseHandler } from '../utils/responseHandler';
 
 export const validateRequest = (schema: Schema) => {
   return (req: Request, res: Response, next: NextFunction): void => {
@@ -16,7 +16,7 @@ export const validateRequest = (schema: Schema) => {
           field: detail.path.join('.'),
           message: detail.message,
         }));
-        ResponseHandler.validationError(res, error.message, validationErrors);
+        throw new ValidationError('Invalid parameters', validationErrors);
       }
 
       // Replace req.body with validated data
@@ -24,7 +24,7 @@ export const validateRequest = (schema: Schema) => {
       next();
     } catch (error) {
       if (error instanceof ValidationError) {
-        ResponseHandler.validationError(res, error.message, error);
+        ResponseHandler.validationError(res, error.message, error.validationErrors);
       } else {
         next(error);
       }
@@ -46,7 +46,7 @@ export const validateParams = (schema: Schema) => {
           message: detail.message,
         }));
 
-        throw new ValidationError('Invalid parameters');
+        throw new ValidationError('Invalid parameters', validationErrors);
       }
 
       // Replace req.params with validated data
@@ -54,7 +54,7 @@ export const validateParams = (schema: Schema) => {
       next();
     } catch (error) {
       if (error instanceof ValidationError) {
-        ResponseHandler.validationError(res, error.message, error);
+        ResponseHandler.validationError(res, error.message, error.validationErrors);
       } else {
         next(error);
       }
@@ -76,7 +76,7 @@ export const validateQuery = (schema: Schema) => {
           message: detail.message,
         }));
 
-        throw new ValidationError('Invalid query parameters');
+        throw new ValidationError('Invalid query parameters', validationErrors);
       }
 
       // Replace req.query with validated data
@@ -84,7 +84,7 @@ export const validateQuery = (schema: Schema) => {
       next();
     } catch (error) {
       if (error instanceof ValidationError) {
-        ResponseHandler.validationError(res, error.message, error);
+        ResponseHandler.validationError(res, error.message, error.validationErrors);
       } else {
         next(error);
       }

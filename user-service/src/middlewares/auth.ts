@@ -27,7 +27,9 @@ export const authenticateJWT = async (
     if (decoded.tokenType !== 'accessToken') {
       throw new AppError('Invalid token type', 401);
     }
-
+    if(decoded.role !== 'user'){
+      throw new AppError('Invalid user', 401);
+    }
     // Check if user exists
     const user = await AuthService.getUserById(decoded.userId);
     if (!user) {
@@ -69,7 +71,9 @@ export const authenticateAdminToken = async (
     if (decoded.tokenType !== 'accessToken') {
       throw new AppError('Invalid token type', 401);
     }
-
+    if(decoded.role == 'user'){
+      throw new AppError('Invalid admin', 401);
+    }
     // Check if admin exists
     const admin = await AdminAuthService.getAdminById(decoded.adminId);
     if (!admin) {

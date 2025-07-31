@@ -1,4 +1,4 @@
-import { TEnvironment } from '@/types';
+import { TEnvironment } from '../types';
 
 const env = process.env as unknown as TEnvironment;
 

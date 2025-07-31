@@ -1,5 +1,5 @@
 import { Application } from 'express';
-import taskRoutes from './task.routes';
+import adminRoutes from './admin';
 
 export const setupRoutes = (app: Application): void => {
   // Health check endpoint
@@ -13,7 +13,7 @@ export const setupRoutes = (app: Application): void => {
   });
 
   // API routes
-  app.use('/api/tasks', taskRoutes);
+  app.use('/api/admin', adminRoutes);
 
   // Root endpoint
   app.get('/', (req, res) => {
@@ -21,7 +21,7 @@ export const setupRoutes = (app: Application): void => {
       message: 'Welcome to Hunt Service API',
       version: '1.0.0',
       endpoints: {
-        tasks: '/api/tasks',
+        tasks: '/api/admin/task',
         health: '/health',
       },
     });

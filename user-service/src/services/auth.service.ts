@@ -19,9 +19,9 @@ export class AuthService {
   /**
    * Generate JWT tokens
    */
-  private static generateTokens(userId: string): TTokenResponse {
-    const accessTokenPayload = { userId, tokenType: 'accessToken' as const };
-    const refreshTokenPayload = { userId, tokenType: 'refreshToken' as const };
+  private static generateTokens(userId: string ): TTokenResponse {
+    const accessTokenPayload = { userId, role:"user", tokenType: 'accessToken' as const };
+    const refreshTokenPayload = { userId, role:"user", tokenType: 'refreshToken' as const };
 
     const accessToken = (jwt.sign as any)(
       accessTokenPayload,
@@ -165,7 +165,7 @@ export class AuthService {
       throw new AppError(error.message, error.statusCode);
     }
   }
-  
+
   /**
    * Refresh access token
    */

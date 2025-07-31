@@ -1,13 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
-import { TaskService } from '@/services/task.service';
-import { ResponseHandler } from '@/utils/responseHandler';
-import { TCreateTaskData, TUpdateTaskData, TTaskQueryParams } from '@/types';
+import { TaskService } from '../services/task.service';
+import { ResponseHandler } from '../utils/responseHandler';
+import { TCreateTaskData, TUpdateTaskData, TTaskQueryParams, TAuthenticatedAdminRequest } from '../types';
 
 export class TaskController {
   /**
    * Create a new task
    */
-  static async create(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async create(req: TAuthenticatedAdminRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const taskData: TCreateTaskData = req.body;
 
@@ -22,7 +22,7 @@ export class TaskController {
   /**
    * Get all tasks with pagination and filtering
    */
-  static async getAll(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async getAll(req: TAuthenticatedAdminRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const queryParams: TTaskQueryParams = {
         page: req.query.page ? parseInt(req.query.page as string) : 1,
@@ -42,7 +42,7 @@ export class TaskController {
   /**
    * Get task by ID
    */
-  static async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async getById(req: TAuthenticatedAdminRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { taskId } = req.params;
 
@@ -62,11 +62,10 @@ export class TaskController {
   /**
    * Update task by ID
    */
-  static async update(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async update(req: TAuthenticatedAdminRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { taskId } = req.params;
       const updateData: TUpdateTaskData = req.body;
-
       const result = await TaskService.update(taskId, updateData);
 
       ResponseHandler.success(res, result, "Task updated successfully");
@@ -78,7 +77,7 @@ export class TaskController {
   /**
    * Delete task by ID
    */
-  static async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async delete(req: TAuthenticatedAdminRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { taskId } = req.params;
 
@@ -93,7 +92,7 @@ export class TaskController {
   /**
    * Get active tasks only
    */
-  static async getActiveTasks(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async getActiveTasks(req: TAuthenticatedAdminRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const tasks = await TaskService.getActiveTasks();
 
@@ -106,7 +105,7 @@ export class TaskController {
   /**
    * Toggle task status
    */
-  static async toggleStatus(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async toggleStatus(req: TAuthenticatedAdminRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { taskId } = req.params;
       const { updated_by } = req.body;

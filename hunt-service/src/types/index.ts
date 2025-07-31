@@ -33,6 +33,14 @@ export type TJwtPayload = {
   iat?: number;
   exp?: number;
 }
+
+export type TAdminJwtPayload = {
+  adminId: string;
+  tokenType: 'accessToken';
+  role?: string;
+  iat?: number;
+  exp?: number;
+}
 export type TAuthenticatedRequest = Request & {
   user?: TJwtPayload;
 }
@@ -116,6 +124,7 @@ export type TTask = {
   status: 'active' | 'inactive';
   created_by: string;
   updated_by: string;
+  task_type: 'mission' | 'question';
   created_at?: Date;
   updated_at?: Date;
 }
@@ -144,4 +153,8 @@ export type TTaskQueryParams = {
   limit?: number;
   status?: 'active' | 'inactive';
   search?: string;
+  task_type?: 'mission' | 'question';
+}
+export type TAuthenticatedAdminRequest = Request & {
+  admin?: TAdminJwtPayload;
 }

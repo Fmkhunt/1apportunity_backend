@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
-import { TEnvironment } from '@/types';
-import * as schema from '@/models/schema';
+import { TEnvironment } from '../types';
+import * as schema from '../models/schema';
 const env = process.env as unknown as TEnvironment;
 
 // Create PostgreSQL connection pool

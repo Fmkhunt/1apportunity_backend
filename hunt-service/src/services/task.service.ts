@@ -41,7 +41,7 @@ export class TaskService {
     totalPages: number;
   }> {
     try {
-      const { page = 1, limit = 10, status, search, task_type } = queryParams;
+      const { page = 1, limit = 10, status, search, type } = queryParams;
       const offset = (page - 1) * limit;
 
       // Build where conditions
@@ -51,8 +51,8 @@ export class TaskService {
         whereConditions.push(eq(tasksTable.status, status));
       }
 
-      if (task_type) {
-        whereConditions.push(eq(tasksTable.task_type, task_type));
+      if (type) {
+        whereConditions.push(eq(tasksTable.type, type));
       }
 
       if (search) {

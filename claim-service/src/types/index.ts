@@ -124,7 +124,7 @@ export type TTask = {
   status: 'active' | 'inactive';
   created_by: string;
   updated_by: string;
-  type: 'mission' | 'question';
+  task_type: 'mission' | 'question';
   created_at?: Date;
   updated_at?: Date;
 }
@@ -153,7 +153,7 @@ export type TTaskQueryParams = {
   limit?: number;
   status?: 'active' | 'inactive';
   search?: string;
-  type?: 'mission' | 'question';
+  task_type?: 'mission' | 'question';
 }
 
 // Hunt related types
@@ -199,6 +199,53 @@ export type THuntQueryParams = {
   search?: string;
   task_id?: string;
   claim_id?: string;
+}
+
+// Claim related types
+export type TClaim = {
+  id: string;
+  reward: number;
+  claim_type: string;
+  levels?: Array<{
+    level: number;
+    user_count: number;
+    rewards: number;
+  }>;
+  coupen_code?: string;
+  product_img?: string;
+  created_at?: Date;
+  updated_at?: Date;
+}
+
+export type TCreateClaimData = {
+  reward: number;
+  claim_type: string;
+  levels?: Array<{
+    level: number;
+    user_count: number;
+    rewards: number;
+  }>;
+  coupen_code?: string;
+  product_img?: string;
+}
+
+export type TUpdateClaimData = {
+  reward?: number;
+  claim_type?: string;
+  levels?: Array<{
+    level: number;
+    user_count: number;
+    rewards: number;
+  }>;
+  coupen_code?: string;
+  product_img?: string;
+}
+
+export type TClaimQueryParams = {
+  page?: number;
+  limit?: number;
+  search?: string;
+  claim_type?: string;
 }
 
 export type TAuthenticatedAdminRequest = Request & {

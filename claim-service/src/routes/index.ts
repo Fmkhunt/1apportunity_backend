@@ -11,7 +11,7 @@ export const setupRoutes = (app: Application): void => {
       environment: process.env.NODE_ENV || 'development',
     });
   });
-  
+
   // API routes
   app.use('/api/admin', adminRoutes);
 

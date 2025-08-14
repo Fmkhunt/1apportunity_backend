@@ -20,7 +20,7 @@ declare global {
 
 global.basedir = __dirname;
 global.APP_NAME = process.env.APP_NAME || 'TechMultiverse';
-global.APP_URL = process.env.APP_URL || 'http://localhost:3001';
+global.APP_URL = process.env.APP_URL || 'http://localhost:3000';
 
 class App {
   public app: Application;

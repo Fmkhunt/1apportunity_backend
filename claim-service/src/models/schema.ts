@@ -9,29 +9,19 @@ export const tasksTable = pgTable('tasks', {
   duration:time('duration').notNull(),
   reward:integer('reward').notNull(),
   status:varchar('status', { enum: ['active', 'inactive'] }).default('active'),
-  type:varchar('type', { enum: ['mission', 'question'] }).default('mission'),
+  task_type:varchar('task_type', { enum: ['mission', 'question'] }).default('mission'),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
 });
 
-export const questionsTable = pgTable('questions', {
-  id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  question: text('question').notNull(),
-  task_id: uuid('task_id').references(() => tasksTable.id),
-  answer: text('answer').notNull(),
-  question_type:varchar('question_type', { enum: ['text', 'mcq'] }).default('text'),
-  options: jsonb('options').$type<
-    { option: string; text: string }[]
-  >(),
-  created_at: timestamp('created_at').defaultNow(),
-  updated_at: timestamp('updated_at').defaultNow(),
-});
 
 export const claimsTable = pgTable('claims', {
   id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  name: varchar('name', { length: 255 }).notNull(),
-  rewards:integer('rewards').notNull(),
-  status:varchar('status', { enum: ['active', 'inactive'] }).default('active'),
+  reward: integer('reward').notNull(),
+  claim_type: varchar('claim_type', { length: 255 }).notNull(),
+  levels: jsonb('levels').$type<Array<{ level: number; user_count: number; rewards: number }> | null>(),
+  coupen_code: varchar('coupen_code', { length: 100 }),
+  product_img: varchar('product_img', { length: 255 }),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
 });

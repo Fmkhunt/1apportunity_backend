@@ -1,4 +1,4 @@
-CREATE TABLE public.admin
+CREATE TABLE admin
 (
     id uuid NOT NULL,
     email varchar(200),

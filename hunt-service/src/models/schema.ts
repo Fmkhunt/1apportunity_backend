@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer, varchar, jsonb, uuid, time } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, integer, varchar, jsonb, uuid, time, unique } from 'drizzle-orm/pg-core';
 import  crypto from 'node:crypto';
 
 // Define schema
@@ -44,8 +44,41 @@ export const huntsTable = pgTable('hunts', {
   description: text('description').notNull(),
   start_date: timestamp('start_date'),
   end_date: timestamp('end_date'),
-  coordinates: text('coordinates').notNull(), // GEOGRAPHY - stored as text
+  coordinates: text('coordinates').notNull(), // Store as WKT string that will be cast to geography in queries
   duration: time('duration'),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
+});
+export const UsersTable = pgTable('users', {
+  id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  name: varchar('name', { length: 150 }).notNull(),
+  phone: varchar('phone', { length: 15 }).notNull(),
+  profile: varchar('profile', { length: 255 }).default(''),
+  balance: integer('balance').default(0),
+  referral_code: varchar('referral_code', { length: 10 }).notNull().unique(),
+  referral_by: varchar('referral_by', { length: 10 }).references(() => UsersTable.referral_code),
+  status: varchar('status', { enum: ['active', 'inactive', 'pending'] }).default('pending'),
+  last_task_at: jsonb('last_task_at').$type<{
+    instagram: Date | null;
+    youtube: Date | null;
+    web: Date | null;
+  }>(),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+});
+
+export const huntClaimTable = pgTable('hunt_claim', {
+  id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  user_id: uuid('user_id').references(() => UsersTable.id).notNull(), // References users table in another service
+  hunt_id: uuid('hunt_id').references(() => huntsTable.id).notNull(),
+  status: varchar('status', { enum: ['search', 'claimed', 'started', 'arrived', 'completed'] }).default("search"),
+  coins: integer('coins'),
+  expire_at: timestamp('expire_at'),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+}, (table) => {
+  return {
+    userClaimUnique: unique().on(table.user_id, table.hunt_id),
+  };
 });

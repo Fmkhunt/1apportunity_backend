@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserService } from '@/services/user.service';
-import { ResponseHandler } from '@/utils/responseHandler';
-import { TAuthenticatedRequest } from '@/types';
-import { AppError } from '@/utils/AppError';
+import { UserService } from '../services/user.service';
+import { ResponseHandler } from '../utils/responseHandler';
+import { TAuthenticatedRequest } from '../types';
+import { AppError } from '../utils/AppError';
 
 export class UserController {
 

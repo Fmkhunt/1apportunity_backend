@@ -1,19 +1,19 @@
 import jwt from 'jsonwebtoken';
-import { UsersTable, otpTable } from '@/models/schema';
-import { db } from '@/config/database';
+import { UsersTable, otpTable } from '../models/schema';
+import { db } from '../config/database';
 import { eq, and, isNotNull, lt, gt } from 'drizzle-orm';
-import { UserModel } from '@/models/Users';
-import { authConfig } from '@/config/auth';
+import { UserModel } from '../models/Users';
+import { authConfig } from '../config/auth';
 import {
   TTokenResponse,
   TJwtPayload,
   TUsers,
   TRegistrationData,
   TLoginData,
-} from '@/types';
-import { AppError } from '@/utils/AppError';
-import { generateRandomString } from '@/utils/Helper';
-import { ReffralModel } from '@/models/Reffral';
+} from '../types';
+import { AppError } from '../utils/AppError';
+import { generateRandomString } from '../utils/Helper';
+import { ReffralModel } from '../models/Reffral';
 
 export class AuthService {
   /**
@@ -22,7 +22,6 @@ export class AuthService {
   private static generateTokens(userId: string ): TTokenResponse {
     const accessTokenPayload = { userId, role:"user", tokenType: 'accessToken' as const };
     const refreshTokenPayload = { userId, role:"user", tokenType: 'refreshToken' as const };
-
     const accessToken = (jwt.sign as any)(
       accessTokenPayload,
       authConfig.jwt.secret,
@@ -173,6 +172,8 @@ export class AuthService {
     try {
 
       // Generate new tokens
+      console.log("user",user);
+
       const tokens = this.generateTokens(user.id);
 
       return tokens;

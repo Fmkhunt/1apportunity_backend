@@ -17,7 +17,6 @@ export const huntValidation = {
     ),
     duration: Joi.string().pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/).optional(),
   }),
-
   update: Joi.object({
     task_id: Joi.string().uuid().optional(),
     claim_id: Joi.string().uuid().optional(),
@@ -42,4 +41,12 @@ export const huntValidation = {
     task_id: Joi.string().uuid().optional(),
     claim_id: Joi.string().uuid().optional(),
   }),
+  getHuntForUser: Joi.object({
+    latitude: Joi.number().min(-90).max(90).required(),
+    longitude: Joi.number().min(-180).max(180).required(),
+  }),
+  updateStatus: Joi.object({
+    status: Joi.string().valid('claimed', 'started', 'arrived', 'completed').required(),
+  }),
+
 }; 

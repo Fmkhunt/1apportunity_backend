@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { Schema } from 'joi';
-import { ValidationError } from '@/utils/AppError';
-import { ResponseHandler } from '@/utils/responseHandler';
+import { ValidationError } from '../utils/AppError';
+import { ResponseHandler } from '../utils/responseHandler';
 
 export const validateRequest = (schema: Schema) => {
   return (req: Request, res: Response, next: NextFunction): void => {

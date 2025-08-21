@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserService } from '@/services/user.service';
-import { ResponseHandler } from '@/utils/responseHandler';
-import { TAuthenticatedAdminRequest } from '@/types/admin';
-import { AppError } from '@/utils/AppError';
-import { AdminUserService } from '@/services/admin/user.service';
+import { UserService } from '../../services/user.service';
+import { ResponseHandler } from '../../utils/responseHandler';
+import { TAuthenticatedAdminRequest } from '../../types/admin';
+import { AppError } from '../../utils/AppError';
+import { AdminUserService } from '../../services/admin/user.service';
 
 export class AdminUserController {
 

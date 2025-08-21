@@ -1,4 +1,4 @@
-import { otpTable } from '@/models/schema';
+import { otpTable } from '../models/schema';
 
 // Define schema
 

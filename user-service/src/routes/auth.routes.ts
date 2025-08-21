@@ -1,10 +1,10 @@
 import { Router } from 'express';
-import { AuthController } from '@/controllers/auth.controller';
+import { AuthController } from '../controllers/auth.controller';
 import {
   authenticateRefreshToken,
-} from '@/middlewares/auth';
-import { validateRequest } from '@/middlewares/validation';
-import { authValidation } from '@/validations/authValidation';
+} from '../middlewares/auth';
+import { validateRequest } from '../middlewares/validation';
+import { authValidation } from '../validations/authValidation';
 
 const router = Router();
 

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { AuthService } from '@/services/auth.service';
-import { ResponseHandler } from '@/utils/responseHandler';
-import { TRegistrationData, TLoginData, TSendOtpData, TAuthenticatedRequest } from '@/types';
+import { AuthService } from '../services/auth.service';
+import { ResponseHandler } from '../utils/responseHandler';
+import { TRegistrationData, TLoginData, TSendOtpData, TAuthenticatedRequest } from '../types';
 
 export class AuthController {
   /**

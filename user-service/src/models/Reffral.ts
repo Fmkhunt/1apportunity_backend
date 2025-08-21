@@ -1,5 +1,5 @@
-import { referralTable, UsersTable } from '@/models/schema';
-import { db } from '@/config/database';
+import { referralTable, UsersTable } from '../models/schema';
+import { db } from '../config/database';
 import { eq, and, isNull, lt, gt } from 'drizzle-orm';
 import { NewUsers, Users, UsersWithMethods } from './Users';
 

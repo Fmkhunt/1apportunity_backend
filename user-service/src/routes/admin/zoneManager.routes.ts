@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { ZoneManagerController } from '@/controllers/admin/zoneManager.controller';
-import { validateQuery, validateRequest } from '@/middlewares/validation';
-import { zoneManagerValidation } from '@/validations/zoneManagerValidation';
-import { authenticateAdminToken } from '@/middlewares/auth';
+import { ZoneManagerController } from '../../controllers/admin/zoneManager.controller';
+import { validateQuery, validateRequest } from '../../middlewares/validation';
+import { zoneManagerValidation } from '../../validations/zoneManagerValidation';
+import { authenticateAdminToken } from '../../middlewares/auth';
 
 const router = Router();
 

@@ -5,12 +5,9 @@ import { huntValidation } from '../validations/huntValidation';
 import { authenticateJWT } from '../middlewares/auth';
 
 const router = Router();
-
 // Create a new hunt
-router.get('/', authenticateJWT, HuntController.getAll);
-
-// Get all hunts with pagination and filtering
-router.get('/', authenticateJWT, validateQuery(huntValidation.query), HuntController.getAll);
+router.get('/', authenticateJWT,validateQuery(huntValidation.getHuntForUser), HuntController.getHunt);
+router.post('/updateStatus/:huntId', authenticateJWT,validateRequest(huntValidation.updateStatus), HuntController.updateStatus);
 
 
 export default router;

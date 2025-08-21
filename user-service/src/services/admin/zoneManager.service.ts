@@ -1,8 +1,8 @@
-import { db } from '@/config/database';
-import { AdminModel } from '@/models/Admin';
-import { AdminTable } from '@/models/schema';
-import { TAdminCreate, TAdminUpdate } from '@/types/admin';
-import { AppError } from '@/utils/AppError';
+import { db } from '../../config/database';
+import { AdminModel } from '../../models/Admin';
+import { AdminTable } from '../../models/schema';
+import { TAdminCreate, TAdminUpdate } from '../../types/admin';
+import { AppError } from '../../utils/AppError';
 import { and, eq, like, ne, sql } from 'drizzle-orm';
 
 export class ZoneManagerService {

@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { AdminAuthController } from '@/controllers/admin/auth.controller';
-import { authenticateAdminRefreshToken, authenticateAdminToken } from '@/middlewares/auth';
-import { validateRequest } from '@/middlewares/validation';
-import { authValidation } from '@/validations/adminValidation';
+import { AdminAuthController } from '../../controllers/admin/auth.controller';
+import { authenticateAdminRefreshToken, authenticateAdminToken } from '../../middlewares/auth';
+import { validateRequest } from '../../middlewares/validation';
+import { authValidation } from '../../validations/adminValidation';
 
 const router = Router();
 

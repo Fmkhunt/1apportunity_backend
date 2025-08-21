@@ -1,40 +1,37 @@
 import { Request, Response, NextFunction } from 'express';
 import { HuntService } from '../services/hunt.service';
+import { HuntClaimService } from '../services/huntClaim.service';
+
 import { ResponseHandler } from '../utils/responseHandler';
-import { TCreateHuntData, TUpdateHuntData, THuntQueryParams, TAuthenticatedAdminRequest } from '../types';
+import {  TgetHuntUserQueryParams, TAuthenticatedRequest,THuntWithClaim } from '../types';
 
 export class HuntController {
-  /**
-   * Create a new hunt
-   */
-  static async create(req: TAuthenticatedAdminRequest, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const huntData: TCreateHuntData = req.body;
-      
-      const result = await HuntService.create(huntData);
-
-      ResponseHandler.created(res, result, "Hunt created successfully");
-    } catch (error) {
-      next(error);
-    }
-  }
 
   /**
    * Get all hunts with pagination and filtering
    */
-  static async getAll(req: TAuthenticatedAdminRequest, res: Response, next: NextFunction): Promise<void> {
+  static async getHunt(req: TAuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const queryParams: THuntQueryParams = {
-        page: req.query.page ? parseInt(req.query.page as string) : 1,
-        limit: req.query.limit ? parseInt(req.query.limit as string) : 10,
-        search: req.query.search as string | undefined,
-        task_id: req.query.task_id as string | undefined,
-        claim_id: req.query.claim_id as string | undefined,
+      const queryParams: TgetHuntUserQueryParams = {
+        latitude: parseFloat(req.query.latitude as string),
+        longitude: parseFloat(req.query.longitude as string),
       };
-
-      const result = await HuntService.getAll(queryParams);
-
+      // const userClaim = await HuntClaimService.getCurrrentClaimByUserId(req.user?.userId);
+      
+      const result = await HuntService.getNewNearByHunt(req.user?.userId,null, queryParams);
+      if(!result){
+        ResponseHandler.notFound(res, "Hunt not found");
+        return;
+      }
+      // if(!userClaim){
+        const claim = await HuntClaimService.createHuntClaim(req.user?.userId, result.id, result.duration);
+        result.claim = claim;
+      // }else{
+        // result.claim = userClaim;
+      // }
+      
       ResponseHandler.success(res, result, "Hunts retrieved successfully");
+      return;
     } catch (error) {
       next(error);
     }
@@ -43,7 +40,7 @@ export class HuntController {
   /**
    * Get hunt by ID
    */
-  static async getById(req: TAuthenticatedAdminRequest, res: Response, next: NextFunction): Promise<void> {
+  static async getById(req: TAuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { huntId } = req.params;
 
@@ -60,63 +57,22 @@ export class HuntController {
     }
   }
 
-  /**
-   * Update hunt by ID
-   */
-  static async update(req: TAuthenticatedAdminRequest, res: Response, next: NextFunction): Promise<void> {
+  static async updateStatus(req: TAuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { huntId } = req.params;
-      const updateData: TUpdateHuntData = req.body;
-      const result = await HuntService.update(huntId, updateData);
+      const { status } = req.body;
 
-      ResponseHandler.success(res, result, "Hunt updated successfully");
+      const hunt = await HuntClaimService.updateStatus(huntId,status);
+
+      if (!hunt) {
+        ResponseHandler.notFound(res, "Hunt not found");
+        return;
+      }
+
+      ResponseHandler.success(res, hunt, "Hunt updated successfully");
     } catch (error) {
       next(error);
     }
   }
 
-  /**
-   * Delete hunt by ID
-   */
-  static async delete(req: TAuthenticatedAdminRequest, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const { huntId } = req.params;
-
-      await HuntService.delete(huntId);
-
-      ResponseHandler.success(res, {}, "Hunt deleted successfully");
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * Get hunts by task ID
-   */
-  static async getByTaskId(req: TAuthenticatedAdminRequest, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const { taskId } = req.params;
-
-      const hunts = await HuntService.getByTaskId(taskId);
-
-      ResponseHandler.success(res, hunts, "Hunts retrieved successfully");
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * Get hunts by claim ID
-   */
-  static async getByClaimId(req: TAuthenticatedAdminRequest, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const { claimId } = req.params;
-
-      const hunts = await HuntService.getByClaimId(claimId);
-
-      ResponseHandler.success(res, hunts, "Hunts retrieved successfully");
-    } catch (error) {
-      next(error);
-    }
-  }
 }

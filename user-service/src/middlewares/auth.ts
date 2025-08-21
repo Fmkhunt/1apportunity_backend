@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { AuthService } from '@/services/auth.service';
-import { TAuthenticatedRequest, TUsers } from '@/types';
-import { TAuthenticatedAdminRequest } from '@/types/admin';
-import { AppError } from '@/utils/AppError';
+import { AuthService } from '../services/auth.service';
+import { TAuthenticatedRequest, TUsers } from '../types';
+import { TAuthenticatedAdminRequest } from '../types/admin';
+import { AppError } from '../utils/AppError';
 
 /**
  * Authenticate JWT token middleware

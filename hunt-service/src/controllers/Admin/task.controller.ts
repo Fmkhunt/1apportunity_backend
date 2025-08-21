@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { TaskService } from '../services/task.service';
-import { ResponseHandler } from '../utils/responseHandler';
-import { TCreateTaskData, TUpdateTaskData, TTaskQueryParams, TAuthenticatedAdminRequest } from '../types';
+import { TaskService } from '../../services/task.service';
+import { ResponseHandler } from '../../utils/responseHandler';
+import { TCreateTaskData, TUpdateTaskData, TTaskQueryParams, TAuthenticatedAdminRequest } from '../../types';
 
 export class TaskController {
   /**

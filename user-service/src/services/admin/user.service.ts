@@ -1,10 +1,10 @@
-import { UsersTable, otpTable } from '@/models/schema';
-import { db } from '@/config/database';
+import { UsersTable, otpTable } from '../../models/schema';
+import { db } from '../../config/database';
 import { eq, and, isNotNull, lt, gt, desc } from 'drizzle-orm';
 import {
   TUsers,
-} from '@/types';
-import { AppError } from '@/utils/AppError';
+} from '../../types';
+import { AppError } from '../../utils/AppError';
 
 export class AdminUserService {
   /**

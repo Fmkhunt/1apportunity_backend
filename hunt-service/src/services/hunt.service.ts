@@ -1,25 +1,31 @@
 import { db } from '../config/database';
-import { huntsTable } from '../models/schema';
-import { eq, and, or, like, desc, asc, sql } from 'drizzle-orm';
+import { huntsTable, huntClaimTable } from '../models/schema';
+import { eq, and, or, like, desc, asc, sql, getTableColumns,isNull } from 'drizzle-orm';
 import { AppError } from '../utils/AppError';
 import {
   THunt,
   TCreateHuntData,
   TUpdateHuntData,
   THuntQueryParams,
+  TgetHuntUserQueryParams,
+  THuntWithClaim
 } from '../types';
 
 export class HuntService {
   /**
-   * Convert coordinates to WKT format
+   * Convert coordinates to WKT format for PostgreSQL geography type
    */
   private static coordinatesToWKT(coordinates: string | { latitude: number; longitude: number }): string {
     if (typeof coordinates === 'string') {
+      // If it's already a WKT string, ensure it has SRID
+      if (coordinates.toUpperCase().startsWith('POINT')) {
+        return `SRID=4326;${coordinates}`;
+      }
       return coordinates;
     }
     
-    // Convert object to WKT POINT format
-    return `POINT(${coordinates.longitude} ${coordinates.latitude})`;
+    // Convert object to WKT POINT format with SRID for geography type
+    return `SRID=4326;POINT(${coordinates.longitude} ${coordinates.latitude})`;
   }
 
   /**
@@ -39,7 +45,26 @@ export class HuntService {
         })
         .returning();
 
-      return newHunt as THunt;
+      // Fetch the created hunt with coordinates extracted using PostgreSQL functions
+      const result = await db
+        .select({
+          ...getTableColumns(huntsTable),
+          coordinates_obj: sql<{ latitude: number; longitude: number } | null>`
+          CASE 
+            WHEN ${huntsTable.coordinates} IS NOT NULL THEN 
+              jsonb_build_object(
+                'latitude', ST_Y(${huntsTable.coordinates}::geometry), 
+                'longitude', ST_X(${huntsTable.coordinates}::geometry)
+              )
+            ELSE NULL 
+          END
+        `
+        })
+        .from(huntsTable)
+        .where(eq(huntsTable.id, newHunt.id))
+        .limit(1);
+      
+      return result[0] as THunt;
     } catch (error) {
       throw new AppError(error.message, 500);
     }
@@ -83,9 +108,21 @@ export class HuntService {
         ? and(...whereConditions)
         : undefined;
 
-      // Get hunts with pagination
+      // Get hunts with pagination - use PostgreSQL's ST_X and ST_Y functions to extract coordinates directly
       const hunts = await db
-        .select()
+        .select({
+          ...getTableColumns(huntsTable),
+          coordinates_obj: sql<{ latitude: number; longitude: number } | null>`
+            CASE 
+              WHEN ${huntsTable.coordinates} IS NOT NULL THEN 
+                jsonb_build_object(
+                  'latitude', ST_Y(${huntsTable.coordinates}::geometry), 
+                  'longitude', ST_X(${huntsTable.coordinates}::geometry)
+                )
+              ELSE NULL 
+            END
+          `
+        })
         .from(huntsTable)
         .where(whereClause)
         .orderBy(desc(huntsTable.created_at))
@@ -117,13 +154,28 @@ export class HuntService {
    */
   static async getById(huntId: string): Promise<THunt | null> {
     try {
-      const hunt = await db
-        .select()
+      const result = await db
+        .select({
+          ...getTableColumns(huntsTable),  
+          coordinates_obj: sql<{ latitude: number; longitude: number } | null>`
+            CASE 
+              WHEN ${huntsTable.coordinates} IS NOT NULL THEN 
+                jsonb_build_object(
+                  'latitude', ST_Y(${huntsTable.coordinates}::geometry), 
+                  'longitude', ST_X(${huntsTable.coordinates}::geometry)
+                )
+              ELSE NULL 
+            END
+          `
+        })
         .from(huntsTable)
         .where(eq(huntsTable.id, huntId))
         .limit(1);
 
-      return hunt[0] as THunt || null;
+      const hunt = result[0];
+      if (!hunt) return null;
+      
+      return hunt;
     } catch (error) {
       throw new AppError(error.message, 500);
     }
@@ -155,7 +207,26 @@ export class HuntService {
         .where(eq(huntsTable.id, huntId))
         .returning();
 
-      return updatedHunt as THunt;
+      // Fetch the updated hunt with coordinates extracted using PostgreSQL functions
+      const result = await db
+        .select({
+          ...getTableColumns(huntsTable),  
+          coordinates_obj: sql<{ latitude: number; longitude: number } | null>`
+            CASE 
+              WHEN ${huntsTable.coordinates} IS NOT NULL THEN 
+                jsonb_build_object(
+                  'latitude', ST_Y(${huntsTable.coordinates}::geometry), 
+                  'longitude', ST_X(${huntsTable.coordinates}::geometry)
+                )
+              ELSE NULL 
+            END
+          `
+        })
+        .from(huntsTable)
+        .where(eq(huntsTable.id, huntId))
+        .limit(1);
+      
+      return result[0] as THunt & { coordinates_obj: { latitude: number; longitude: number } | null };
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
@@ -192,12 +263,24 @@ export class HuntService {
   static async getByTaskId(taskId: string): Promise<THunt[]> {
     try {
       const hunts = await db
-        .select()
+        .select({
+          ...getTableColumns(huntsTable),
+          coordinates_obj: sql<{ latitude: number; longitude: number } | null>`
+            CASE 
+              WHEN ${huntsTable.coordinates} IS NOT NULL THEN 
+                jsonb_build_object(
+                  'latitude', ST_Y(${huntsTable.coordinates}::geometry), 
+                  'longitude', ST_X(${huntsTable.coordinates}::geometry)
+                )
+              ELSE NULL 
+            END
+          `
+        })
         .from(huntsTable)
         .where(eq(huntsTable.task_id, taskId))
         .orderBy(desc(huntsTable.created_at));
 
-      return hunts;
+      return hunts as THunt[];
     } catch (error) {
       throw new AppError(error.message, 500);
     }
@@ -209,14 +292,63 @@ export class HuntService {
   static async getByClaimId(claimId: string): Promise<THunt[]> {
     try {
       const hunts = await db
-        .select()
+        .select({
+          ...getTableColumns(huntsTable),
+          coordinates_obj: sql<{ latitude: number; longitude: number } | null>`
+            CASE 
+              WHEN ${huntsTable.coordinates} IS NOT NULL THEN 
+                jsonb_build_object(
+                  'latitude', ST_Y(${huntsTable.coordinates}::geometry), 
+                  'longitude', ST_X(${huntsTable.coordinates}::geometry)
+                )
+              ELSE NULL 
+            END
+          `
+        })
         .from(huntsTable)
         .where(eq(huntsTable.claim_id, claimId))
         .orderBy(desc(huntsTable.created_at));
 
-      return hunts;
+      return hunts as THunt[];
     } catch (error) {
       throw new AppError(error.message, 500);
     }
   }
-} 
+
+  /**
+   * Get new near by hunt
+   */
+  static async getNewNearByHunt(userId: string,hunt_id: string | null ,queryParams: TgetHuntUserQueryParams): Promise<THuntWithClaim> {
+    try {
+      // Get hunts with pagination - use PostgreSQL's ST_X and ST_Y functions to extract coordinates directly
+      const hunts = await db
+        .select({
+          ...getTableColumns(huntsTable),
+          coordinates_obj: sql<{ latitude: number; longitude: number } | null>`
+            CASE 
+              WHEN ${huntsTable.coordinates} IS NOT NULL THEN 
+                jsonb_build_object(
+                  'latitude', ST_Y(${huntsTable.coordinates}::geometry), 
+                  'longitude', ST_X(${huntsTable.coordinates}::geometry)
+                )
+              ELSE NULL 
+            END
+          `
+        })
+        .from(huntsTable)
+        .leftJoin( huntClaimTable, eq(huntsTable.id, huntClaimTable.hunt_id))
+        .where(
+          hunt_id
+            ? eq(huntsTable.id, hunt_id) // ✅ Case 1: filter by hunt_id
+            : isNull(huntClaimTable.user_id) // ✅ Case 2: only unclaimed hunts
+        ).limit(1)
+      // console.log(hunts)
+      // Get total count
+      return  hunts[0] as THunt;
+    } catch (error) {
+      console.error(error);
+      throw new AppError(error.message, 500);
+    }
+  }
+
+}

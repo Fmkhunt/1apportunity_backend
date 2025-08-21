@@ -1,8 +1,8 @@
-import { db } from '@/config/database';
+import { db } from '../config/database';
 import { AdminTable } from './schema';
 import { eq, sql } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
-import { TAdmin, TAdminCreate, TAdminUpdate } from '@/types/admin';
+import { TAdmin, TAdminCreate, TAdminUpdate } from '../types/admin';
 import wellknown from 'wellknown';
 
 export class AdminModel {

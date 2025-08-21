@@ -1,8 +1,8 @@
 import { Response, NextFunction } from 'express';
-import { ResponseHandler } from '@/utils/responseHandler';
-import { AppError } from '@/utils/AppError';
-import { TAdminCreate, TAdminUpdate, TAuthenticatedAdminRequest } from '@/types/admin';
-import { ZoneManagerService } from '@/services/admin/zoneManager.service';
+import { ResponseHandler } from '../../utils/responseHandler';
+import { AppError } from '../../utils/AppError';
+import { TAdminCreate, TAdminUpdate, TAuthenticatedAdminRequest } from '../../types/admin';
+import { ZoneManagerService } from '../../services/admin/zoneManager.service';
 
 export class ZoneManagerController {
   static async create(req: TAuthenticatedAdminRequest, res: Response, next: NextFunction) {

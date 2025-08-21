@@ -1,5 +1,5 @@
-import { UsersTable } from '@/models/schema';
-import { db } from '@/config/database';
+import { UsersTable } from '../models/schema';
+import { db } from '../config/database';
 import { eq, and, isNull, lt, gt } from 'drizzle-orm';
 import  crypto from 'node:crypto';
 

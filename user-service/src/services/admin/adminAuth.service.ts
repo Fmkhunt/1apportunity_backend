@@ -1,8 +1,8 @@
 import jwt from 'jsonwebtoken';
-import { AdminModel } from '@/models/Admin';
-import { TAdmin, TAdminJwtPayload, TAdminLoginData, TAdminTokenResponse } from '@/types/admin';
-import { authConfig } from '@/config/auth';
-import { AppError } from '@/utils/AppError';
+import { AdminModel } from '../../models/Admin';
+import { TAdmin, TAdminJwtPayload, TAdminLoginData, TAdminTokenResponse } from '../../types/admin';
+import { authConfig } from '../../config/auth';
+import { AppError } from '../../utils/AppError';
 
 export class AdminAuthService {
   /**

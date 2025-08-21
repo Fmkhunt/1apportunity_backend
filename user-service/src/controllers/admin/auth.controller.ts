@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { AdminAuthService } from '@/services/admin/adminAuth.service';
-import { ResponseHandler } from '@/utils/responseHandler';
-import { AppError } from '@/utils/AppError';
-import { TAdminLoginData, TAuthenticatedAdminRequest, TAdmin } from '@/types/admin';
+import { AdminAuthService } from '../../services/admin/adminAuth.service';
+import { ResponseHandler } from '../../utils/responseHandler';
+import { AppError } from '../../utils/AppError';
+import { TAdminLoginData, TAuthenticatedAdminRequest, TAdmin } from '../../types/admin';
 
 export class AdminAuthController {
   /**

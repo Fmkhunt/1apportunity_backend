@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { HuntController } from '../../controllers/hunt.controller';
+import { HuntController } from '../../controllers/Admin/hunt.controller';
 import { validateRequest, validateQuery } from '../../middlewares/validation';
 import { huntValidation } from '../../validations/huntValidation';
 import { authenticateAdminToken } from '../../middlewares/auth';

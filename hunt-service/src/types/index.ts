@@ -166,6 +166,7 @@ export type THunt = {
   start_date?: Date;
   end_date?: Date;
   coordinates: string;
+  coordinates_obj?: { latitude: number; longitude: number } | null;
   duration?: string;
   created_at?: Date;
   updated_at?: Date;
@@ -200,7 +201,26 @@ export type THuntQueryParams = {
   task_id?: string;
   claim_id?: string;
 }
+export type TgetHuntUserQueryParams = {
+  latitude?: number;
+  longitude?: number;
+}
+export type THuntClaim = {
+  id: string;
+  user_id: string;
+  hunt_id: string;
+  status: string;
+  coins: number;
+  created_at?: Date;
+  updated_at?: Date;
+  expire_at?: Date;
+}
+export type THuntWithClaim = THunt & {
+  claim?: THuntClaim | null;
+};
 
 export type TAuthenticatedAdminRequest = Request & {
   admin?: TAdminJwtPayload;
 }
+
+export type THuntClaimStatus = 'search' | 'claimed' | 'started' | 'arrived' | 'completed';

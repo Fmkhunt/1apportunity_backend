@@ -1,19 +1,20 @@
 import { db } from '../config/database';
 import { huntsTable, huntClaimTable } from '../models/schema';
-import { eq, and,gt, or, like, desc, asc, sql, getTableColumns,isNull } from 'drizzle-orm';
+import { eq, and,gt, or, like, desc, asc, sql, getTableColumns,isNull, isNotNull } from 'drizzle-orm';
 import { AppError } from '../utils/AppError';
 import {
+  THuntClaim,
   THuntClaimStatus,
 } from '../types';
 import { parseDurationToSeconds } from '../utils/Helper';
+import { TaskService } from './task.service';
+import { trpc } from '../trpc/client';
+
 export class HuntClaimService {
-  /**
-   * Convert coordinates to WKT format for PostgreSQL geography type
-   */
   /**
    * Create a new hunt
    */
-  static async createHuntClaim(userId: string, huntId: string, duration: string): Promise<any> {
+  static async createHuntClaim(userId: string, huntId: string, claim_id: string, task_id: string, duration: string): Promise<any> {
     try {
       const expiredAt = new Date();
       expiredAt.setSeconds(expiredAt.getSeconds() + parseDurationToSeconds(duration));
@@ -22,6 +23,8 @@ export class HuntClaimService {
         .values({
           user_id: userId,
           hunt_id: huntId,
+          claim_id: claim_id,
+          task_id: task_id,
           status: "search",
           expire_at: expiredAt,
           created_at: new Date(),
@@ -53,6 +56,7 @@ export class HuntClaimService {
       throw new AppError(error.message, 500);
     }
   }
+
   static async updateStatus(huntClaimId: string,status: THuntClaimStatus): Promise<any> {
     try {
       const result = await db
@@ -60,6 +64,96 @@ export class HuntClaimService {
         .set({
           status: status,
           updated_at: new Date(),
+        })
+        .where(
+          and(
+            eq(huntClaimTable.id, huntClaimId),
+          )
+        ).returning();
+
+      return result[0];
+    } catch (error) {
+      console.log(error)
+      throw new AppError(error.message, 500);
+    }
+  }
+  static async getById(huntClaimId: string): Promise<THuntClaim | null> {
+    try {
+      const result = await db
+        .select()
+        .from(huntClaimTable)
+        .where(
+          and(
+            eq(huntClaimTable.id, huntClaimId),
+          )
+        ).limit(1);
+      return result[0];
+    } catch (error) {
+      console.log(error)
+      throw new AppError(error.message, 500);
+    }
+  }
+
+  static async findMyHuntClaim(huntId: string, userId: string): Promise<THuntClaim | null> {
+    try {
+      const result = await db
+        .select()
+        .from(huntClaimTable)
+        .where(
+          and(
+            eq(huntClaimTable.hunt_id, huntId),
+            eq(huntClaimTable.user_id, userId),
+          )
+        ).limit(1);
+
+      return result[0];
+    } catch (error) {
+      console.log(error)
+      throw new AppError(error.message, 500);
+    }
+  }
+  
+  static async completeHuntClaim(huntClaimId: string,hunt_id:string, claimData: any): Promise<THuntClaim> {
+    try {
+
+      // Call claim service via tRPC to get claim data
+      // const claimData = await (trpc as any).claim.getById.query(huntClaim.claim_id);
+      // if (!claimData) {
+      //   throw new AppError('Claim not found in claim service', 404);
+      // }
+
+      // console.log('Retrieved claim data:', claimData);
+
+      const getRank = await db
+        .select()
+        .from(huntClaimTable)
+        .where(
+          and(
+            eq(huntClaimTable.hunt_id, hunt_id),
+            isNotNull(huntClaimTable.rank)
+          )
+        ).orderBy(asc(huntClaimTable.rank)).limit(1);
+      
+      const rank = getRank[0]?.rank  ?? 1;
+      const level = claimData.levels;
+      let totalUser=0;
+      let coins=0;
+      
+      for (const item of level) {
+        totalUser += item.user_count;
+        if (totalUser >= rank) {
+          coins = item.rewards;
+          break;
+        }
+      }
+      const result = await db
+        .update(huntClaimTable)
+        .set({
+          status: "completed",
+          completed_at: new Date(),
+          updated_at: new Date(),
+          rank: rank,
+          coins: coins,
         })
         .where(
           and(

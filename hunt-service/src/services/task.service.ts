@@ -7,7 +7,10 @@ import {
   TCreateTaskData,
   TUpdateTaskData,
   TTaskQueryParams,
+  TQuestion,
 } from '../types';
+import { QuestionService } from './question.service';
+import { HuntClaimService } from './huntClaim.service';
 
 export class TaskService {
   /**
@@ -15,10 +18,14 @@ export class TaskService {
    */
   static async create(taskData: TCreateTaskData): Promise<TTask> {
     try {
+      // Extract questions from taskData
+      const { questions, ...taskDataWithoutQuestions } = taskData;
+
+      // Create the task
       const [newTask] = await db
         .insert(tasksTable)
         .values({
-          ...taskData,
+          ...taskDataWithoutQuestions,
           created_at: new Date(),
           updated_at: new Date(),
         })
@@ -211,4 +218,33 @@ export class TaskService {
       throw new AppError(error.message, 500);
     }
   }
+
+  /**
+   * Get task details with questions if task type is 'question'
+   */
+  static async getTaskDetails(taskId: string): Promise<TTask & { questions?: TQuestion[] }> {
+    try {
+      const tasks = await db
+        .select()
+        .from(tasksTable)
+        .where(eq(tasksTable.id, taskId))
+        .limit(1);
+      
+      const task = tasks[0] as TTask;
+      
+      // If task type is 'question', fetch associated questions
+      if (task && task.type === 'question') {
+        const questions = await QuestionService.getByTaskId(taskId);
+        return { ...task, questions };
+      }
+      
+      return task;
+    } catch (error) {
+      throw new AppError(error.message, 500);
+    }
+  }
+    /**
+   * Complete task
+   */
+  
 }

@@ -48,5 +48,14 @@ export const huntValidation = {
   updateStatus: Joi.object({
     status: Joi.string().valid('claimed', 'started', 'arrived', 'completed').required(),
   }),
+  completeHuntClaim: Joi.object({
+    hunt_id: Joi.string().uuid().required(),
+    task_id: Joi.string().uuid().required(),
+    huntClaim_id: Joi.string().uuid().required(),
+    answers: Joi.array().items(Joi.object({
+      question_id: Joi.string().uuid().required(),
+      answer: Joi.string().required(),
+    })),
+  }),
 
 }; 

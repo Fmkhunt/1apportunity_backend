@@ -10,7 +10,7 @@ export const validateRequest = (schema: Schema) => {
         abortEarly: false,
         stripUnknown: true,
       });
-
+      // console.error(1234)
       if (error) {
         const validationErrors = error.details.map((detail) => ({
           field: detail.path.join('.'),
@@ -22,6 +22,7 @@ export const validateRequest = (schema: Schema) => {
       req.body = value;
       next();
     } catch (error) {
+      console.error(error);
       if (error instanceof ValidationError) {
         ResponseHandler.validationError(res, error.message, error.data);
       } else {

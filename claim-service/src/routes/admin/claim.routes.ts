@@ -24,4 +24,4 @@ router.put('/:claimId', authenticateAdminToken, validateRequest(claimValidation.
 // Delete claim by ID
 router.delete('/:claimId', authenticateAdminToken, ClaimController.delete);
 
-export default router; 
+export default router;

@@ -135,8 +135,15 @@ export type TCreateTaskData = {
   duration: string;
   reward: number;
   status?: 'active' | 'inactive';
+  type?: 'mission' | 'question';
   created_by: string;
   updated_by: string;
+  questions?: {
+    question: string;
+    answer: string;
+    question_type?: 'text' | 'mcq';
+    options?: { option: string; text: string }[];
+  }[];
 }
 
 export type TUpdateTaskData = {
@@ -209,11 +216,15 @@ export type THuntClaim = {
   id: string;
   user_id: string;
   hunt_id: string;
+  claim_id: string | null;
+  task_id: string | null;
   status: string;
   coins: number;
   created_at?: Date;
   updated_at?: Date;
   expire_at?: Date;
+  completed_at?: Date;
+  rank?: number;
 }
 export type THuntWithClaim = THunt & {
   claim?: THuntClaim | null;
@@ -224,3 +235,22 @@ export type TAuthenticatedAdminRequest = Request & {
 }
 
 export type THuntClaimStatus = 'search' | 'claimed' | 'started' | 'arrived' | 'completed';
+
+export type TCreateQuestionData = {
+  question: string;
+  task_id: string;
+  answer: string;
+  question_type?: 'text' | 'mcq';
+  options?: { option: string; text: string }[];
+}
+
+export type TQuestion = {
+  id: string;
+  question: string;
+  task_id: string;
+  answer: string;
+  question_type: 'text' | 'mcq';
+  options?: { option: string; text: string }[];
+  created_at: Date;
+  updated_at: Date;
+}

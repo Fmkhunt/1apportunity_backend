@@ -10,6 +10,9 @@ import { setupRoutes } from './routes';
 import { authConfig } from './config/auth';
 import { AppError } from './utils/AppError';
 import { ResponseHandler } from './utils/responseHandler';
+import * as trpcExpress from '@trpc/server/adapters/express';
+import { appRouter } from './trpc/router';
+import { createContext } from './trpc/context';
 
 // Global variables
 declare global {
@@ -81,6 +84,15 @@ class App {
   }
 
   private initializeRoutes(): void {
+    // Setup tRPC middleware
+    this.app.use(
+      '/trpc',
+      trpcExpress.createExpressMiddleware({
+        router: appRouter,
+        createContext,
+      })
+    );
+
     setupRoutes(this.app);
   }
 

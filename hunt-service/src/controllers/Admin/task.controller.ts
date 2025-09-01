@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { TaskService } from '../../services/task.service';
+import { QuestionService } from '../../services/question.service';
 import { ResponseHandler } from '../../utils/responseHandler';
-import { TCreateTaskData, TUpdateTaskData, TTaskQueryParams, TAuthenticatedAdminRequest } from '../../types';
+import { TCreateTaskData, TUpdateTaskData, TTaskQueryParams, TAuthenticatedAdminRequest, TCreateQuestionData } from '../../types';
 
 export class TaskController {
   /**
@@ -11,9 +12,46 @@ export class TaskController {
     try {
       const taskData: TCreateTaskData = req.body;
 
-      const result = await TaskService.create(taskData);
+      // Validate that if task type is 'question', questions array is provided
+      if (taskData.type === 'question') {
+        if (!taskData.questions || taskData.questions.length === 0) {
+          ResponseHandler.validationError(res, "Questions are required when task type is 'question'");
+          return;
+        }
 
-      ResponseHandler.created(res, result, "Task created successfully");
+        // Validate each question
+        for (const question of taskData.questions) {
+          if (!question.question || !question.answer) {
+            ResponseHandler.validationError(res, "Each question must have 'question' and 'answer' fields");
+            return;
+          }
+
+          // If question type is MCQ, validate options
+          if (question.question_type === 'mcq') {
+            if (!question.options || question.options.length === 0) {
+              ResponseHandler.validationError(res, "MCQ questions must have options");
+              return;
+            }
+          }
+        }
+      }
+
+      const task = await TaskService.create(taskData);
+
+      // If task type is 'question' and questions are provided, create questions
+      if (taskData.type === 'question' && taskData.questions && taskData.questions.length > 0) {
+        const questionsToCreate: TCreateQuestionData[] = taskData.questions.map(q => ({
+          question: q.question,
+          task_id: task.id,
+          answer: q.answer,
+          question_type: q.question_type || 'text',
+          options: q.options,
+        }));
+
+        await QuestionService.createMultiple(questionsToCreate);
+      }
+      
+      ResponseHandler.created(res, task, "Task created successfully");
     } catch (error) {
       next(error);
     }

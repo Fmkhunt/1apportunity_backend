@@ -72,11 +72,15 @@ export const huntClaimTable = pgTable('hunt_claim', {
   id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   user_id: uuid('user_id').references(() => UsersTable.id).notNull(), // References users table in another service
   hunt_id: uuid('hunt_id').references(() => huntsTable.id).notNull(),
+  task_id: uuid('task_id').references(() => tasksTable.id),
   status: varchar('status', { enum: ['search', 'claimed', 'started', 'arrived', 'completed'] }).default("search"),
+  claim_id: uuid('claim_id').references(() => claimsTable.id),
   coins: integer('coins'),
   expire_at: timestamp('expire_at'),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
+  completed_at: timestamp('completed_at'),
+  rank: integer('rank'),
 }, (table) => {
   return {
     userClaimUnique: unique().on(table.user_id, table.hunt_id),

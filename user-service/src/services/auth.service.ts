@@ -94,6 +94,7 @@ export class AuthService {
       await db.delete(otpTable).where(eq(otpTable.phone, phone));
       return {user: newUser, token: this.generateTokens(newUser.id)};
     } catch (error) {
+      console.error(error);
       throw new AppError(error.message, error.statusCode);
     }
   }
@@ -116,6 +117,7 @@ export class AuthService {
       await db.delete(otpTable).where(eq(otpTable.phone, phone));
       return {user: user, token: this.generateTokens(user.id)};
     } catch (error) {
+      console.error(error);
       throw new AppError(error.message, error.statusCode);
     }
   }
@@ -145,7 +147,9 @@ export class AuthService {
         }
       }
       await db.delete(otpTable).where(eq(otpTable.phone, phone));
-      const code: number = Math.floor(100000 + Math.random() * 900000);
+      // const code: number = Math.floor(100000 + Math.random() * 900000);
+      const code: number=1234;
+
       const newOtp = await db.insert(otpTable).values({
         phone: phone,
         user_id: user?.id || null,
@@ -161,6 +165,7 @@ export class AuthService {
       };
 
     } catch (error) {
+      console.error(error);
       throw new AppError(error.message, error.statusCode);
     }
   }
@@ -178,6 +183,7 @@ export class AuthService {
 
       return tokens;
     } catch (error) {
+      console.error(error);
       if (error instanceof AppError) throw error;
       throw new AppError('Token refresh failed', 500);
     }

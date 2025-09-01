@@ -33,6 +33,8 @@ class App {
   }
 
   private initializeMiddlewares(): void {
+    
+    this.app.set('trust proxy', 1); // trust first proxy (e.g., Nginx or load balancer)
     // Security middleware
     this.app.use(helmet({
       contentSecurityPolicy: {
@@ -63,7 +65,6 @@ class App {
     // Rate limiting
     const limiter = rateLimit(authConfig.rateLimit);
     this.app.use(limiter);
-
     // Auth-specific rate limiting
     const authLimiter = rateLimit(authConfig.authRateLimit);
     this.app.use('/api/auth', authLimiter);

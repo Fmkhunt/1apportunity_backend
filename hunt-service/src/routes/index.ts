@@ -1,6 +1,7 @@
 import { Application } from 'express';
 import adminRoutes from './admin';
 import huntRoutes from './hunts.routes';
+import taskRoutes from './task.routes';
 
 export const setupRoutes = (app: Application): void => {
   // Health check endpoint
@@ -16,6 +17,7 @@ export const setupRoutes = (app: Application): void => {
   // API routes
   app.use('/api/admin', adminRoutes);
   app.use('/api/hunt', huntRoutes);
+  app.use('/api/task', taskRoutes);
 
   // Root endpoint
   app.get('/', (req, res) => {

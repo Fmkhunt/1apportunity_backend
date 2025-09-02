@@ -1,6 +1,6 @@
 import { db } from '../config/database';
 import { huntsTable, huntClaimTable } from '../models/schema';
-import { eq, and, or, like, desc, asc, sql, getTableColumns,isNull } from 'drizzle-orm';
+import { eq, and, or, like, desc, asc, sql, getTableColumns,isNull, ne } from 'drizzle-orm';
 import { AppError } from '../utils/AppError';
 import {
   THunt,
@@ -321,6 +321,7 @@ export class HuntService {
   static async getNewNearByHunt(userId: string,hunt_id: string | null ,queryParams: TgetHuntUserQueryParams): Promise<THuntWithClaim> {
     try {
       // Get hunts with pagination - use PostgreSQL's ST_X and ST_Y functions to extract coordinates directly
+      // let whereClause = and(isNull(huntClaimTable.user_id));
       const hunts = await db
         .select({
           ...getTableColumns(huntsTable),
@@ -336,12 +337,9 @@ export class HuntService {
           `
         })
         .from(huntsTable)
-        .leftJoin( huntClaimTable, eq(huntsTable.id, huntClaimTable.hunt_id))
-        .where(
-          hunt_id
-            ? eq(huntsTable.id, hunt_id) // ✅ Case 1: filter by hunt_id
-            : isNull(huntClaimTable.user_id) // ✅ Case 2: only unclaimed hunts
-        ).limit(1)
+        .leftJoin(huntClaimTable, and(eq(huntsTable.id, huntClaimTable.hunt_id), ne(huntClaimTable.user_id, userId)))
+        .limit(1)
+
       // console.log(hunts)
       // Get total count
       return  hunts[0] as THunt;

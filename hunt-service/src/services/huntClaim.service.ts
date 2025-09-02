@@ -4,11 +4,13 @@ import { eq, and,gt, or, like, desc, asc, sql, getTableColumns,isNull, isNotNull
 import { AppError } from '../utils/AppError';
 import {
   THuntClaim,
+  THuntWithClaim,
   THuntClaimStatus,
 } from '../types';
 import { parseDurationToSeconds } from '../utils/Helper';
 import { TaskService } from './task.service';
 import { trpc } from '../trpc/client';
+import { numeric } from 'drizzle-orm/pg-core';
 
 export class HuntClaimService {
   /**
@@ -168,4 +170,33 @@ export class HuntClaimService {
     }
   }
 
+  static async getHuntHistory(user_id: string | null, page: number, limit: number): Promise<{ hunts: THuntWithClaim[]; totalRecords: number; page: number; limit: number; totalPages: number }> {
+    try {
+      const offset = (page - 1) * limit;
+
+      let conditions=[eq(huntClaimTable.status, 'completed')];
+      if(user_id){
+        conditions.push(eq(huntClaimTable.user_id, user_id));
+      }
+      const whereCondition =and(...conditions);
+      const hunts = await db.query.huntClaimTable
+        .findMany({
+          where: whereCondition,
+          orderBy: desc(huntClaimTable.created_at),
+          with: { hunt: true },
+          limit: limit,
+          offset: offset,
+        });
+      const totalRecords = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(huntClaimTable)
+        .where(whereCondition);
+
+        const totalPages = Math.ceil((totalRecords[0]?.count ?? 0) / limit);
+      return { hunts: hunts as unknown as THuntWithClaim[], totalRecords: Number(totalRecords[0]?.count) ?? 0, page, limit, totalPages };
+    } catch (error) {
+      console.error(error);
+      throw new AppError(error.message, 500);
+    }
+  }
 }

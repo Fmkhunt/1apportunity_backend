@@ -51,11 +51,14 @@ export const huntValidation = {
   completeHuntClaim: Joi.object({
     hunt_id: Joi.string().uuid().required(),
     task_id: Joi.string().uuid().required(),
-    huntClaim_id: Joi.string().uuid().required(),
     answers: Joi.array().items(Joi.object({
       question_id: Joi.string().uuid().required(),
       answer: Joi.string().required(),
     })),
+  }),
+  pagination: Joi.object({
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(10),
   }),
 
 }; 

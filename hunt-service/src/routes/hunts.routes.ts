@@ -9,6 +9,7 @@ const router = Router();
 router.get('/', authenticateJWT,validateQuery(huntValidation.getHuntForUser), HuntController.getHunt);
 router.post('/updateStatus/:huntId', authenticateJWT,validateRequest(huntValidation.updateStatus), HuntController.updateStatus);
 router.post('/completeHunt', authenticateJWT,validateRequest(huntValidation.completeHuntClaim), HuntController.completeHuntClaim);
+router.get('/completeHuntHistory', authenticateJWT,validateQuery(huntValidation.pagination), HuntController.completeHuntHistory);
 
 
 export default router;

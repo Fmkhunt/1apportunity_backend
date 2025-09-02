@@ -1,5 +1,6 @@
 import { pgTable, text, timestamp, integer, varchar, jsonb, uuid, time, unique } from 'drizzle-orm/pg-core';
 import  crypto from 'node:crypto';
+import { relations } from "drizzle-orm";
 
 // Define schema
 export const tasksTable = pgTable('tasks', {
@@ -86,3 +87,64 @@ export const huntClaimTable = pgTable('hunt_claim', {
     userClaimUnique: unique().on(table.user_id, table.hunt_id),
   };
 });
+
+
+
+
+// Users ↔ Hunt Claims
+export const usersRelations = relations(UsersTable, ({ many }) => ({
+  huntClaims: many(huntClaimTable),
+}));
+
+// Hunts ↔ Hunt Claims
+export const huntsRelations = relations(huntsTable, ({ many, one }) => ({
+  task: one(tasksTable, {
+    fields: [huntsTable.task_id],
+    references: [tasksTable.id],
+  }),
+  claim: one(claimsTable, {
+    fields: [huntsTable.claim_id],
+    references: [claimsTable.id],
+  }),
+  huntClaims: many(huntClaimTable),
+}));
+
+// Tasks ↔ Hunts & Questions
+export const tasksRelations = relations(tasksTable, ({ many }) => ({
+  hunts: many(huntsTable),
+  questions: many(questionsTable),
+}));
+
+// Claims ↔ Hunts & HuntClaims
+export const claimsRelations = relations(claimsTable, ({ many }) => ({
+  hunts: many(huntsTable),
+  huntClaims: many(huntClaimTable),
+}));
+
+// HuntClaim ↔ Users, Hunts, Tasks, Claims
+export const huntClaimRelations = relations(huntClaimTable, ({ one }) => ({
+  user: one(UsersTable, {
+    fields: [huntClaimTable.user_id],
+    references: [UsersTable.id],
+  }),
+  hunt: one(huntsTable, {
+    fields: [huntClaimTable.hunt_id],
+    references: [huntsTable.id],
+  }),
+  task: one(tasksTable, {
+    fields: [huntClaimTable.task_id],
+    references: [tasksTable.id],
+  }),
+  claim: one(claimsTable, {
+    fields: [huntClaimTable.claim_id],
+    references: [claimsTable.id],
+  }),
+}));
+
+// Questions ↔ Tasks
+export const questionsRelations = relations(questionsTable, ({ one }) => ({
+  task: one(tasksTable, {
+    fields: [questionsTable.task_id],
+    references: [tasksTable.id],
+  }),
+}));

@@ -44,7 +44,7 @@ export class HuntService {
           updated_at: new Date(),
         })
         .returning();
-
+        
       // Fetch the created hunt with coordinates extracted using PostgreSQL functions
       const result = await db
         .select({

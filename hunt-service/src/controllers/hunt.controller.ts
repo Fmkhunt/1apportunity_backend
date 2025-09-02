@@ -5,7 +5,7 @@ import { TaskService } from '../services/task.service';
 import { trpc } from '../trpc/client';
 
 import { ResponseHandler } from '../utils/responseHandler';
-import {  TgetHuntUserQueryParams, TAuthenticatedRequest,THuntWithClaim } from '../types';
+import {  TgetHuntUserQueryParams, TAuthenticatedRequest } from '../types';
 import { QuestionService } from '../services/question.service';
 
 export class HuntController {
@@ -154,4 +154,17 @@ export class HuntController {
       next(error);
     }
   }
+
+  static async completeHuntHistory(req: TAuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { page, limit } = req.query;
+      const userId= req.user.userId
+      const response = await HuntClaimService.getHuntHistory(userId, parseInt(page as string) | 1, parseInt(limit as string) | 10);
+        
+      ResponseHandler.success(res, response, "Hunt history retrieved successfully");
+    } catch (error) {
+      next(error);
+    }
+  }
+
 }

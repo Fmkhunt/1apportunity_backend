@@ -21,10 +21,9 @@ export class HuntController {
       };
       let result= null;
       const userClaim = await HuntClaimService.getCurrrentClaimByUserId(req.user?.userId);
-      console.log("userClaim",userClaim);
-      if (!userClaim) {
-        result = await HuntService.getNewNearByHunt(req.user?.userId,null, queryParams);
-        
+      if (!userClaim || userClaim?.status=="search") {
+        result = await HuntService.getNewNearByHunt(req.user?.userId, queryParams);
+        console.log(result)
         if(!result){
           ResponseHandler.notFound(res, "Hunt not found");
           return;

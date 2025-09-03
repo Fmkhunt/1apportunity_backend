@@ -1,6 +1,6 @@
 import { db } from '../config/database';
 import { huntsTable, huntClaimTable } from '../models/schema';
-import { eq, and, or, like, desc, asc, sql, getTableColumns,isNull, ne } from 'drizzle-orm';
+import { eq, and, or, like, desc, asc, sql, getTableColumns,isNull, ne, notExists } from 'drizzle-orm';
 import { AppError } from '../utils/AppError';
 import {
   THunt,
@@ -318,7 +318,7 @@ export class HuntService {
   /**
    * Get new near by hunt
    */
-  static async getNewNearByHunt(userId: string,hunt_id: string | null ,queryParams: TgetHuntUserQueryParams): Promise<THuntWithClaim> {
+  static async getNewNearByHunt(userId: string ,queryParams: TgetHuntUserQueryParams): Promise<THuntWithClaim> {
     try {
       // Get hunts with pagination - use PostgreSQL's ST_X and ST_Y functions to extract coordinates directly
       // let whereClause = and(isNull(huntClaimTable.user_id));
@@ -337,11 +337,22 @@ export class HuntService {
           `
         })
         .from(huntsTable)
-        .leftJoin(huntClaimTable, and(eq(huntsTable.id, huntClaimTable.hunt_id), ne(huntClaimTable.user_id, userId)))
-        .limit(1)
-
-      // console.log(hunts)
-      // Get total count
+        .where(
+          notExists(
+            db
+              .select()
+              .from(huntClaimTable)
+              .where(
+                and(
+                  eq(huntClaimTable.hunt_id, huntsTable.id),
+                  eq(huntClaimTable.user_id, userId)
+                )
+              )
+          )
+        )
+        .limit(1);
+        
+      console.log(hunts);
       return  hunts[0] as THunt;
     } catch (error) {
       console.error(error);

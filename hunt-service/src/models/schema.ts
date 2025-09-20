@@ -13,6 +13,7 @@ export const tasksTable = pgTable('tasks', {
   reward:integer('reward').notNull(),
   status:varchar('status', { enum: ['active', 'inactive'] }).default('active'),
   type:varchar('type', { enum: ['mission', 'question'] }).default('mission'),
+  claim_id: uuid('claim_id').references(() => claimsTable.id),
   created_by: uuid('created_by'),
   updated_by: uuid('updated_by'),
   created_at: timestamp('created_at').defaultNow(),
@@ -45,8 +46,6 @@ export const claimsTable = pgTable('claims', {
 
 export const huntsTable = pgTable('hunts', {
   id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  task_id: uuid('task_id').references(() => tasksTable.id).notNull(),
-  claim_id: uuid('claim_id').references(() => claimsTable.id).notNull(),
   admin_id: uuid('admin_id'),
   name: varchar('name', { length: 255 }).notNull(),
   description: text('description').notNull(),
@@ -81,54 +80,16 @@ export const huntClaimTable = pgTable('hunt_claim', {
   id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   user_id: uuid('user_id').references(() => UsersTable.id).notNull(), // References users table in another service
   hunt_id: uuid('hunt_id').references(() => huntsTable.id).notNull(),
-  task_id: uuid('task_id').references(() => tasksTable.id),
   status: varchar('status', { enum: ['search', 'claimed', 'started', 'arrived', 'completed'] }).default("search"),
-  claim_id: uuid('claim_id').references(() => claimsTable.id),
-  coins: integer('coins'),
   expire_at: timestamp('expire_at'),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
   completed_at: timestamp('completed_at'),
-  rank: integer('rank'),
 }, (table) => {
   return {
     userClaimUnique: unique().on(table.user_id, table.hunt_id),
   };
 });
-
-
-
-
-// Users ↔ Hunt Claims
-export const usersRelations = relations(UsersTable, ({ many }) => ({
-  huntClaims: many(huntClaimTable),
-}));
-
-// Hunts ↔ Hunt Claims
-export const huntsRelations = relations(huntsTable, ({ many, one }) => ({
-  task: one(tasksTable, {
-    fields: [huntsTable.task_id],
-    references: [tasksTable.id],
-  }),
-  claim: one(claimsTable, {
-    fields: [huntsTable.claim_id],
-    references: [claimsTable.id],
-  }),
-  huntClaims: many(huntClaimTable),
-}));
-
-// Tasks ↔ Questions & ClueTasks
-export const tasksRelations = relations(tasksTable, ({ many }) => ({
-  hunts: many(huntsTable),
-  questions: many(questionsTable),
-  clueTasks: many(clueTasksTable),
-}));
-
-// Claims ↔ Hunts & HuntClaims
-export const claimsRelations = relations(claimsTable, ({ many }) => ({
-  hunts: many(huntsTable),
-  huntClaims: many(huntClaimTable),
-}));
 
 // Clues
 export const cluesTable = pgTable('clues', {
@@ -150,6 +111,49 @@ export const clueTasksTable = pgTable('clue_tasks', {
 }, (table) => ({
   unq: unique().on(table.clue_id, table.task_id),
 }));
+
+
+
+
+// Users ↔ Hunt Claims
+export const usersRelations = relations(UsersTable, ({ many }) => ({
+  huntClaims: many(huntClaimTable),
+}));
+
+// Hunts ↔ Hunt Claims
+export const huntTasksTable = pgTable('hunt_tasks', {
+  id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  hunt_id: uuid('hunt_id').notNull().references(() => huntsTable.id, { onDelete: 'cascade' }),
+  task_id: uuid('task_id').notNull().references(() => tasksTable.id, { onDelete: 'cascade' }),
+  created_by: uuid('created_by'),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+}, (table) => ({
+  unq: unique().on(table.hunt_id, table.task_id),
+}));
+
+export const huntsRelations = relations(huntsTable, ({ many }) => ({
+  huntTasks: many(huntTasksTable),
+  huntClaims: many(huntClaimTable),
+}));
+
+// Tasks ↔ Questions & ClueTasks
+export const tasksRelations = relations(tasksTable, ({ many, one }) => ({
+  claim: one(claimsTable, {
+    fields: [tasksTable.claim_id],
+    references: [claimsTable.id],
+  }),
+  huntTasks: many(huntTasksTable),
+  questions: many(questionsTable),
+  clueTasks: many(clueTasksTable),
+}));
+
+// Claims ↔ HuntClaims
+export const claimsRelations = relations(claimsTable, ({ many }) => ({
+  tasks: many(tasksTable),
+  huntClaims: many(huntClaimTable),
+}));
+
 
 // Relations
 export const cluesRelations = relations(cluesTable, ({ many }) => ({
@@ -177,14 +181,6 @@ export const huntClaimRelations = relations(huntClaimTable, ({ one }) => ({
   hunt: one(huntsTable, {
     fields: [huntClaimTable.hunt_id],
     references: [huntsTable.id],
-  }),
-  task: one(tasksTable, {
-    fields: [huntClaimTable.task_id],
-    references: [tasksTable.id],
-  }),
-  claim: one(claimsTable, {
-    fields: [huntClaimTable.claim_id],
-    references: [claimsTable.id],
   }),
 }));
 

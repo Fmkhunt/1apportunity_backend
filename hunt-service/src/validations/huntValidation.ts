@@ -2,8 +2,7 @@ import Joi from 'joi';
 
 export const huntValidation = {
   create: Joi.object({
-    task_id: Joi.string().uuid().required(),
-    claim_id: Joi.string().uuid().required(),
+    task_ids: Joi.array().items(Joi.string().uuid()).min(1).required(),
     name: Joi.string().min(1).max(255).required(),
     description: Joi.string().min(1).required(),
     start_date: Joi.date().optional(),
@@ -19,8 +18,7 @@ export const huntValidation = {
     admin_id: Joi.string().uuid().required(),
   }),
   update: Joi.object({
-    task_id: Joi.string().uuid().optional(),
-    claim_id: Joi.string().uuid().optional(),
+    task_ids: Joi.array().items(Joi.string().uuid()).min(1).optional(),
     name: Joi.string().min(1).max(255).optional(),
     description: Joi.string().min(1).optional(),
     start_date: Joi.date().optional(),
@@ -41,7 +39,6 @@ export const huntValidation = {
     limit: Joi.number().integer().min(1).max(100).default(10),
     search: Joi.string().min(1).optional(),
     task_id: Joi.string().uuid().optional(),
-    claim_id: Joi.string().uuid().optional(),
     admin_id: Joi.string().uuid().optional(),
   }),
   getHuntForUser: Joi.object({

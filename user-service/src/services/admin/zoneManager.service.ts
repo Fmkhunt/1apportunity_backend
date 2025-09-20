@@ -1,27 +1,28 @@
 import { db } from '../../config/database';
 import { AdminModel } from '../../models/Admin';
 import { AdminTable } from '../../models/schema';
-import { TAdminCreate, TAdminUpdate } from '../../types/admin';
+import { TAdmin, TAdminCreate, TAdminUpdate } from '../../types/admin';
 import { AppError } from '../../utils/AppError';
 import { and, eq, like, ne, sql } from 'drizzle-orm';
-
+import bcrypt from 'bcryptjs';
 export class ZoneManagerService {
 
-  static async create(data: TAdminCreate) {
+  static async create(data: TAdminCreate): Promise<TAdmin> {
     // Check if email already exists
     const existing = await AdminModel.findByEmail(data.email);
     if (existing) {
       throw new AppError('Email is already registered', 409);
     }
-    const polygon = this.coordinatesToWKT(data.coordinates || []);
-    const admin = await AdminModel.create({
+    // const polygon = this.coordinatesToWKT(data.coordinates || []);
+    const hashedPassword = await bcrypt.hash(data.password, 12);
+    const [admin] = await db.insert(AdminTable).values({
       email: data.email,
-      password: data.password,
+      password: hashedPassword,
       role: 'zone_manager',
       permissions: data.permissions,
-      area: polygon,
-    });
-    return admin;
+      zone_id: data.zone_id,
+    }).returning();
+    return admin as TAdmin;
   }
 
 
@@ -75,7 +76,7 @@ export class ZoneManagerService {
         id: true,
         email: true,
         role: true,
-        area: true,
+        // area: true,
         created_at: true,
         updated_at: true,
       },
@@ -97,10 +98,10 @@ export class ZoneManagerService {
       }
     }
     let updateData = { ...data };
-    if (data.coordinates) {
-      updateData.area = this.coordinatesToWKT(data.coordinates);
-    }
-    delete updateData.coordinates;
+    // if (data.coordinates) {
+    //   updateData.area = this.coordinatesToWKT(data.coordinates);
+    // }
+    // delete updateData.coordinates;
 
     const updated = await AdminModel.updateById(id, updateData);
     return updated;

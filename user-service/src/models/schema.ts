@@ -43,13 +43,38 @@ export const referralTable = pgTable('reffral', {
   updated_at: timestamp('updated_at').defaultNow(),
 });
 
+// Service Location table schema
+export const ServiceLocationTable = pgTable('service_location', {
+  id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  country: varchar('country', { length: 100 }).notNull(),
+  timezone: varchar('timezone', { length: 50 }).notNull(),
+  currency: varchar('currency', { length: 50 }).notNull(),
+  currency_sign: varchar('currency_sign', { length: 10 }).notNull(),
+  currency_short: varchar('currency_short', { length: 10 }).notNull(),
+  map: varchar('map', { length: 50 }).notNull(), // google, apple, etc.
+  payment_gateway: varchar('payment_gateway', { length: 50 }).notNull(), // stripe, paypal, etc.
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+});
+
+// Zone table schema
+export const ZoneTable = pgTable('zone', {
+  id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: varchar('name', { length: 100 }).notNull(),
+  description: text('description'),
+  area: text('area'), // GEOMETRY(POLYGON, 4326) - stored as text for now
+  service_location_id: uuid('service_location_id').references(() => ServiceLocationTable.id).notNull(),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+});
+
 // Admin table schema
 export const AdminTable = pgTable('admin', {
   id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   email: varchar('email', { length: 200 }).notNull().unique(),
   password: varchar('password', { length: 200 }).notNull(),
   role: varchar('role', { length: 50 }).default('manager'),
-  area: text('area'), // GEOMETRY(POLYGON, 4326) - stored as text for now
+  zone_id: uuid('zone_id').references(() => ZoneTable.id),
   permissions: jsonb('permissions').$type<string[]>(),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),

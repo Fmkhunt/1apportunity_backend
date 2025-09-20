@@ -9,7 +9,7 @@ export type TAdmin = {
   email: string;
   password: string;
   role: string;
-  area?: string;
+  zone_id?: string;
   permissions?: string[];
   created_at: Date;
   updated_at: Date;
@@ -19,18 +19,16 @@ export type TAdminCreate = {
   email: string;
   password: string;
   role?: string;
-  area?: string;
+  zone_id?: string;
   permissions?: string[];
-  coordinates?: { latitude: number; longitude: number }[];
 }
 
 export type TAdminUpdate = {
   email?: string;
   password?: string;
   role?: string;
-  area?: string;
+  zone_id?: string;
   permissions?: string[];
-  coordinates?: { latitude: number; longitude: number }[];
 }
 
 export type TAdminLoginData = {

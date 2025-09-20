@@ -17,16 +17,7 @@ export const appRouter = router({
       .query(async ({ input }) => {
         try {
           const rows = await db
-          .select({
-            ...getTableColumns(AdminTable),
-            coordinates_arr: sql<{ type: string, coordinates:[{ latitude: number; longitude: number}] }>`
-              CASE 
-                WHEN ${AdminTable.area} IS NOT NULL THEN 
-                ST_AsGeoJSON(${AdminTable.area})
-                ELSE NULL 
-              END
-            `
-          })
+          .select()
           .from(AdminTable)
           .where(eq(AdminTable.id, input))
           .limit(1);
@@ -43,18 +34,9 @@ export const appRouter = router({
       .query(async ({ input }) => {
         try {
           const rows = await db
-          .select({
-            ...getTableColumns(AdminTable),
-            coordinates_arr: sql<{ type: string, coordinates:[{ latitude: number; longitude: number}] }>`
-              CASE 
-                WHEN ${AdminTable.area} IS NOT NULL THEN 
-                ST_AsGeoJSON(${AdminTable.area})
-                ELSE NULL 
-              END
-            `
-          })
+          .select()
           .from(AdminTable)
-          .where(sql`ST_Within(ST_SetSRID(ST_MakePoint(${input.longitude}, ${input.latitude}), 4326), ${AdminTable.area})`)
+          // .where(sql`ST_Within(ST_SetSRID(ST_MakePoint(${input.longitude}, ${input.latitude}), 4326), ${AdminTable.area})`)
           .limit(1);
           return rows[0] ?? null;
         } catch (error) {

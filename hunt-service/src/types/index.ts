@@ -125,6 +125,7 @@ export type TTask = {
   created_by: string;
   updated_by: string;
   type: 'mission' | 'question';
+  claim_id?: string | null;
   created_at?: Date;
   updated_at?: Date;
   clue_ids?: string[];
@@ -137,6 +138,7 @@ export type TCreateTaskData = {
   reward: number;
   status?: 'active' | 'inactive';
   type?: 'mission' | 'question';
+  claim_id?: string;
   created_by: string;
   updated_by: string;
   clue_ids?: string[];
@@ -155,6 +157,7 @@ export type TUpdateTaskData = {
   reward?: number;
   status?: 'active' | 'inactive';
   updated_by: string;
+  claim_id?: string;
   clue_ids?: string[];
 }
 
@@ -199,8 +202,6 @@ export type TClueQueryParams = {
 // Hunt related types
 export type THunt = {
   id: string;
-  task_id: string;
-  claim_id: string;
   name: string;
   description: string;
   start_date?: Date;
@@ -211,11 +212,10 @@ export type THunt = {
   created_by?: string;
   created_at?: Date;
   updated_at?: Date;
+  task_ids?: string[];
 }
 
 export type TCreateHuntData = {
-  task_id: string;
-  claim_id: string;
   admin_id: string;
   name: string;
   description: string;
@@ -224,6 +224,7 @@ export type TCreateHuntData = {
   coordinates: string | { latitude: number; longitude: number };
   duration?: string;
   created_by: string;
+  task_ids?: string[];
 }
 export type TCreateClue = {
   name: string;
@@ -231,14 +232,13 @@ export type TCreateClue = {
 }
 
 export type TUpdateHuntData = {
-  task_id?: string;
-  claim_id?: string;
   name?: string;
   description?: string;
   start_date?: Date;
   end_date?: Date;
   coordinates?: string | { latitude: number; longitude: number };
   duration?: string;
+  task_ids?: string[];
 }
 
 export type THuntQueryParams = {
@@ -246,7 +246,6 @@ export type THuntQueryParams = {
   limit?: number;
   search?: string;
   task_id?: string;
-  claim_id?: string;
   admin_id?: string;
 }
 export type TgetHuntUserQueryParams = {
@@ -257,16 +256,12 @@ export type THuntClaim = {
   id: string;
   user_id: string;
   hunt_id: string;
-  claim_id: string | null;
-  task_id: string | null;
   status: string;
-  coins: number;
   created_by?: string;
   created_at?: Date;
   updated_at?: Date;
   expire_at?: Date;
   completed_at?: Date;
-  rank?: number;
 }
 export type THuntWithClaim = THunt & {
   claim?: THuntClaim | null;

@@ -1,7 +1,9 @@
 import { Router } from 'express';
-import userRoutes from '@/routes/admin/users.routes';
-import authRoutes from '@/routes/admin/auth.routes';
-import zoneManagerRoutes from '@/routes/admin/zoneManager.routes';
+import userRoutes from './users.routes';
+import authRoutes from './auth.routes';
+import zoneManagerRoutes from './zoneManager.routes';
+import serviceLocationRoutes from './serviceLocation.routes';
+import zoneRoutes from './zone.routes';
 
 const router = Router();
 
@@ -13,5 +15,11 @@ router.use('/users', userRoutes);
 
 // Zone manager routes
 router.use('/zonemanager', zoneManagerRoutes);
+
+// Service location routes
+router.use('/service-locations', serviceLocationRoutes);
+
+// Zone routes
+router.use('/zones', zoneRoutes);
 
 export default router;

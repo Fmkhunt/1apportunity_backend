@@ -1,9 +1,8 @@
 import { db } from '../config/database';
 import { AdminTable } from './schema';
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { TAdmin, TAdminCreate, TAdminUpdate } from '../types/admin';
-import wellknown from 'wellknown';
 
 export class AdminModel {
   /**
@@ -14,7 +13,6 @@ export class AdminModel {
     console.log("adminData", adminData);
     const [admin] = await db.insert(AdminTable).values({
       ...adminData,
-      area: sql.raw(`ST_GeomFromText('${adminData.area}', 4326)`),
       password: hashedPassword,
     }).returning();
 
@@ -28,9 +26,6 @@ export class AdminModel {
     const admin = await db.query.AdminTable.findFirst({
       where: eq(AdminTable.email, email),
     });
-    if (admin?.area) {
-      admin.area = wellknown.parse(admin.area);
-    }
     return admin as TAdmin | null;
   }
 
@@ -41,9 +36,6 @@ export class AdminModel {
     const admin = await db.query.AdminTable.findFirst({
       where: eq(AdminTable.id, id),
     });
-    if (admin?.area) {
-      admin.area = wellknown.parse(admin.area);
-    }
     return admin as TAdmin | null;
   }
 

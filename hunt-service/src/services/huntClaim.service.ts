@@ -16,7 +16,7 @@ export class HuntClaimService {
   /**
    * Create a new hunt
    */
-  static async createHuntClaim(userId: string, huntId: string, claim_id: string, task_id: string, duration: string): Promise<any> {
+  static async createHuntClaim(userId: string, huntId: string, duration: string): Promise<any> {
     try {
       const expiredAt = new Date();
       expiredAt.setSeconds(expiredAt.getSeconds() + parseDurationToSeconds(duration));
@@ -25,8 +25,6 @@ export class HuntClaimService {
         .values({
           user_id: userId,
           hunt_id: huntId,
-          claim_id: claim_id,
-          task_id: task_id,
           status: "search",
           expire_at: expiredAt,
           created_at: new Date(),
@@ -115,47 +113,14 @@ export class HuntClaimService {
     }
   }
   
-  static async completeHuntClaim(huntClaimId: string,hunt_id:string, claimData: any): Promise<THuntClaim> {
+  static async completeHuntClaim(huntClaimId: string, hunt_id: string, task_id: string, claimData: any): Promise<THuntClaim> {
     try {
-
-      // Call claim service via tRPC to get claim data
-      // const claimData = await (trpc as any).claim.getById.query(huntClaim.claim_id);
-      // if (!claimData) {
-      //   throw new AppError('Claim not found in claim service', 404);
-      // }
-
-      // console.log('Retrieved claim data:', claimData);
-
-      const getRank = await db
-        .select()
-        .from(huntClaimTable)
-        .where(
-          and(
-            eq(huntClaimTable.hunt_id, hunt_id),
-            isNotNull(huntClaimTable.rank)
-          )
-        ).orderBy(asc(huntClaimTable.rank)).limit(1);
-      
-      const rank = getRank[0]?.rank  ?? 1;
-      const level = claimData.levels;
-      let totalUser=0;
-      let coins=0;
-      
-      for (const item of level) {
-        totalUser += item.user_count;
-        if (totalUser >= rank) {
-          coins = item.rewards;
-          break;
-        }
-      }
       const result = await db
         .update(huntClaimTable)
         .set({
           status: "completed",
           completed_at: new Date(),
           updated_at: new Date(),
-          rank: rank,
-          coins: coins,
         })
         .where(
           and(

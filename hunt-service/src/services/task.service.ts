@@ -20,13 +20,14 @@ export class TaskService {
     try {
       return await db.transaction(async (tx) => {
         // Extract questions and clue_ids from taskData
-        const { questions, clue_ids, ...taskDataWithoutExtras } = taskData;
+        const { questions, clue_ids, claim_id, ...taskDataWithoutExtras } = taskData;
 
         // Create the task
         const [newTask] = await tx
           .insert(tasksTable)
           .values({
             ...taskDataWithoutExtras,
+            claim_id: claim_id,
             created_at: new Date(),
             updated_at: new Date(),
           })
@@ -185,13 +186,14 @@ export class TaskService {
         }
 
         // Extract clue_ids from updateData
-        const { clue_ids, ...taskUpdateData } = updateData;
+        const { clue_ids, claim_id, ...taskUpdateData } = updateData;
 
         // Update the task
         const [updatedTask] = await tx
           .update(tasksTable)
           .set({
             ...taskUpdateData,
+            claim_id: claim_id,
             updated_at: new Date(),
           })
           .where(eq(tasksTable.id, taskId))

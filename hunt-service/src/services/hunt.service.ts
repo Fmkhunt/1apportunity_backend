@@ -1,5 +1,5 @@
 import { db } from '../config/database';
-import { huntsTable, huntClaimTable } from '../models/schema';
+import { huntsTable, huntClaimTable, huntTasksTable } from '../models/schema';
 import { eq, and, or, like, desc, asc, sql, getTableColumns,isNull, ne, notExists, lte, gte } from 'drizzle-orm';
 import { AppError } from '../utils/AppError';
 import {
@@ -111,15 +111,29 @@ export class HuntService {
         }
       }
       
+      const { task_ids, ...huntCore } = huntData as any;
       const [newHunt] = await db
         .insert(huntsTable)
         .values({
-          ...huntData,
+          ...huntCore,
           coordinates,
           created_at: new Date(),
           updated_at: new Date(),
         })
         .returning();
+
+      // map tasks if provided
+      if (task_ids && Array.isArray(task_ids) && task_ids.length > 0) {
+        await db.insert(huntTasksTable).values(
+          task_ids.map(tid => ({
+            hunt_id: newHunt.id,
+            task_id: tid,
+            created_by: huntCore.created_by,
+            created_at: new Date(),
+            updated_at: new Date(),
+          }))
+        );
+      }
         
       // Fetch the created hunt with coordinates extracted using PostgreSQL functions
       const result = await db
@@ -157,19 +171,14 @@ export class HuntService {
     totalPages: number;
   }> {
     try {
-      const { page = 1, limit = 10, search, task_id, claim_id, admin_id } = queryParams;
+      const { page = 1, limit = 10, search, task_id, admin_id } = queryParams;
       const offset = (page - 1) * limit;
 
       // Build where conditions
       const whereConditions = [];
 
-      if (task_id) {
-        whereConditions.push(eq(huntsTable.task_id, task_id));
-      }
+      // task filter handled via join below
 
-      if (claim_id) {
-        whereConditions.push(eq(huntsTable.claim_id, claim_id));
-      }
 
       if (admin_id) {
         whereConditions.push(eq(huntsTable.admin_id as any, admin_id));
@@ -189,7 +198,7 @@ export class HuntService {
         : undefined;
 
       // Get hunts with pagination - use PostgreSQL's ST_X and ST_Y functions to extract coordinates directly
-      const hunts = await db
+      const baseSelect = db
         .select({
           ...getTableColumns(huntsTable),
           coordinates_obj: sql<{ latitude: number; longitude: number } | null>`
@@ -203,17 +212,40 @@ export class HuntService {
             END
           `
         })
-        .from(huntsTable)
-        .where(whereClause)
-        .orderBy(desc(huntsTable.created_at))
-        .limit(limit)
-        .offset(offset);
+        .from(huntsTable);
+
+      const hunts = task_id
+        ? await baseSelect
+            .innerJoin(huntTasksTable, eq(huntTasksTable.hunt_id, huntsTable.id))
+            .where(
+              whereClause
+                ? and(eq(huntTasksTable.task_id, task_id), whereClause)
+                : eq(huntTasksTable.task_id, task_id)
+            )
+            .orderBy(desc(huntsTable.created_at))
+            .limit(limit)
+            .offset(offset)
+        : await baseSelect
+            .where(whereClause)
+            .orderBy(desc(huntsTable.created_at))
+            .limit(limit)
+            .offset(offset);
 
       // Get total count
-      const [{ count }] = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(huntsTable)
-        .where(whereClause);
+      const [{ count }] = task_id
+        ? await db
+            .select({ count: sql<number>`count(*)` })
+            .from(huntsTable)
+            .innerJoin(huntTasksTable, eq(huntTasksTable.hunt_id, huntsTable.id))
+            .where(
+              whereClause
+                ? and(eq(huntTasksTable.task_id, task_id), whereClause)
+                : eq(huntTasksTable.task_id, task_id)
+            )
+        : await db
+            .select({ count: sql<number>`count(*)` })
+            .from(huntsTable)
+            .where(whereClause);
 
       const totalPages = Math.ceil(count / limit);
 
@@ -277,15 +309,29 @@ export class HuntService {
         coordinates = this.coordinatesToWKT(coordinates);
       }
 
+      const { task_ids, ...updateCore } = updateData as any;
       const [updatedHunt] = await db
         .update(huntsTable)
         .set({
-          ...updateData,
+          ...updateCore,
           coordinates: coordinates as string | null,
           updated_at: new Date(),
         })
         .where(eq(huntsTable.id, huntId))
         .returning();
+
+      // if task_ids provided, reset mappings
+      if (task_ids) {
+        await db.delete(huntTasksTable).where(eq(huntTasksTable.hunt_id, huntId));
+        if (task_ids.length > 0) {
+          await db.insert(huntTasksTable).values(task_ids.map(tid => ({
+            hunt_id: huntId,
+            task_id: tid,
+            created_at: new Date(),
+            updated_at: new Date(),
+          })));
+        }
+      }
 
       // Fetch the updated hunt with coordinates extracted using PostgreSQL functions
       const result = await db
@@ -357,7 +403,8 @@ export class HuntService {
           `
         })
         .from(huntsTable)
-        .where(eq(huntsTable.task_id, taskId))
+        .innerJoin(huntTasksTable, eq(huntTasksTable.hunt_id, huntsTable.id))
+        .where(eq(huntTasksTable.task_id, taskId))
         .orderBy(desc(huntsTable.created_at));
 
       return hunts as THunt[];
@@ -366,34 +413,6 @@ export class HuntService {
     }
   }
 
-  /**
-   * Get hunts by claim ID
-   */
-  static async getByClaimId(claimId: string): Promise<THunt[]> {
-    try {
-      const hunts = await db
-        .select({
-          ...getTableColumns(huntsTable),
-          coordinates_obj: sql<{ latitude: number; longitude: number } | null>`
-            CASE 
-              WHEN ${huntsTable.coordinates} IS NOT NULL THEN 
-                jsonb_build_object(
-                  'latitude', ST_Y(${huntsTable.coordinates}::geometry), 
-                  'longitude', ST_X(${huntsTable.coordinates}::geometry)
-                )
-              ELSE NULL 
-            END
-          `
-        })
-        .from(huntsTable)
-        .where(eq(huntsTable.claim_id, claimId))
-        .orderBy(desc(huntsTable.created_at));
-
-      return hunts as THunt[];
-    } catch (error) {
-      throw new AppError(error.message, 500);
-    }
-  }
 
   /**
    * Get new near by hunt

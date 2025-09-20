@@ -32,7 +32,6 @@ export class HuntController {
         limit: req.query.limit ? parseInt(req.query.limit as string) : 10,
         search: req.query.search as string | undefined,
         task_id: req.query.task_id as string | undefined,
-        claim_id: req.query.claim_id as string | undefined,
         admin_id: req.query.admin_id as string | undefined,
       };
 
@@ -109,18 +108,5 @@ export class HuntController {
     }
   }
 
-  /**
-   * Get hunts by claim ID
-   */
-  static async getByClaimId(req: TAuthenticatedAdminRequest, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const { claimId } = req.params;
-
-      const hunts = await HuntService.getByClaimId(claimId);
-
-      ResponseHandler.success(res, hunts, "Hunts retrieved successfully");
-    } catch (error) {
-      next(error);
-    }
-  }
+  // Removed getByClaimId: claim_id is no longer on hunts; tasks carry claim linkage.
 }

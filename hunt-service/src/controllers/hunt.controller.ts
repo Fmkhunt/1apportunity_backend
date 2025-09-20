@@ -76,8 +76,6 @@ export class HuntController {
       const created = await HuntClaimService.createHuntClaim(
         userId,
         hunt_id,
-        hunt.claim_id,
-        hunt.task_id,
         hunt.duration as string,
       );
 
@@ -127,7 +125,7 @@ export class HuntController {
 
   static async completeHuntClaim(req: TAuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { huntClaim_id, hunt_id, task_id, answers } = req.body;
+      const { hunt_id, task_id, answers } = req.body;
       
       const hunt = await HuntService.getById(hunt_id);
       if (!hunt) {
@@ -142,12 +140,18 @@ export class HuntController {
         return;
       }
 
+      // Get task and claim data via tRPC
+      const task = await TaskService.getById(task_id);
+      if (!task) {
+        ResponseHandler.notFound(res, "Task not found");
+        return;
+      }
+
       // Get claim data using tRPC
       let claimData = null;
-      const claim_id=huntClaim.claim_id
-      if (huntClaim.claim_id) {
+      if (task.claim_id) {
         try {
-          claimData = await (trpc as any).claim.getById.query(huntClaim.claim_id);
+          claimData = await (trpc as any).claim.getById.query(task.claim_id);
         } catch (error) {
           console.error(error);
           ResponseHandler.error(res, "Claim not found via tRPC");
@@ -155,11 +159,6 @@ export class HuntController {
         }
       }
       
-      const task = await TaskService.getById(task_id);
-      if (!task) {
-        ResponseHandler.notFound(res, "Task not found");
-        return;
-      }
       console.log("task.type",task.type)
       if (task.type == 'question') {
         console.log("if")
@@ -170,7 +169,7 @@ export class HuntController {
           return;
         }
       }
-      const completedClaim = await HuntClaimService.completeHuntClaim(huntClaim.id, hunt_id, claimData);
+      const completedClaim = await HuntClaimService.completeHuntClaim(huntClaim.id, hunt_id, task_id, claimData);
       
       const response = {
         huntClaim: completedClaim

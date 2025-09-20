@@ -10,6 +10,7 @@ import { setupRoutes } from './routes';
 import { authConfig } from './config/auth';
 import { AppError } from './utils/AppError';
 import { ResponseHandler } from './utils/responseHandler';
+import { createTRPCServer } from './trpc/server';
 
 // Global variables
 declare global {
@@ -82,7 +83,9 @@ class App {
   }
 
   private initializeRoutes(): void {
+    this.app.use(createTRPCServer());
     setupRoutes(this.app);
+    // tRPC endpoint (mirrors claim-service pattern)
   }
 
   private initializeErrorHandling(): void {

@@ -1,6 +1,6 @@
 import { db } from '../config/database';
 import { huntsTable, huntClaimTable } from '../models/schema';
-import { eq, and, or, like, desc, asc, sql, getTableColumns,isNull, ne, notExists } from 'drizzle-orm';
+import { eq, and, or, like, desc, asc, sql, getTableColumns,isNull, ne, notExists, lte, gte } from 'drizzle-orm';
 import { AppError } from '../utils/AppError';
 import {
   THunt,
@@ -10,6 +10,7 @@ import {
   TgetHuntUserQueryParams,
   THuntWithClaim
 } from '../types';
+import { trpcUser } from '../trpc/client';
 
 export class HuntService {
   /**
@@ -29,11 +30,86 @@ export class HuntService {
   }
 
   /**
+   * Parse a WKT POLYGON string to an array of [lng, lat]
+   */
+  private static parseWktPolygon(wkt: string): [number, number][] {
+    // Expect formats like: 'POLYGON((lng lat, lng lat, ...))' or with SRID prefix
+    const polyStr = wkt.includes('POLYGON') ? wkt : wkt.toUpperCase();
+    const start = polyStr.indexOf('POLYGON');
+    if (start === -1) return [];
+    const open = polyStr.indexOf('(', start);
+    const close = polyStr.lastIndexOf(')');
+    const inner = wkt.slice(open + 1, close).replace(/\(/g, '').replace(/\)/g, '');
+    return inner
+      .split(',')
+      .map(p => p.trim())
+      .filter(Boolean)
+      .map(pair => {
+        const [lngStr, latStr] = pair.split(/\s+/);
+        return [Number(lngStr), Number(latStr)] as [number, number];
+      });
+  }
+
+  /**
+   * Ray-casting algorithm for point-in-polygon (lng,lat)
+   */
+  private static isPointInPolygon(point: { latitude: number; longitude: number }, polygon: [number, number][]): boolean {
+    let inside = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const xi = polygon[i][0], yi = polygon[i][1];
+      const xj = polygon[j][0], yj = polygon[j][1];
+      const x = point.longitude, y = point.latitude;
+      const intersect = ((yi > y) !== (yj > y)) && (x < ((xj - xi) * (y - yi)) / (yj - yi + 0.0) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  }
+
+  /**
    * Create a new hunt
    */
   static async create(huntData: TCreateHuntData): Promise<THunt> {
     try {
+      // 1) Validate admin
+      if (!huntData.admin_id) {
+        throw new AppError('admin_id is required', 400);
+      }
+
+      let admin: any = null;
+      try {
+        admin = await (trpcUser as any).admin.getById.query(huntData.admin_id);
+      } catch (e) {
+        console.error(e)
+        throw new AppError('Failed to validate admin via user-service', 502);
+      }
+
+      if (!admin) {
+        throw new AppError('Admin not found', 404);
+      }
+
+      // 2) Validate coordinates inside admin area (if area exists)
       const coordinates = this.coordinatesToWKT(huntData.coordinates);
+      let coordsObj: { latitude: number; longitude: number } | null = null;
+      if (typeof huntData.coordinates === 'string') {
+        // try to parse POINT(lng lat)
+        const m = huntData.coordinates.match(/POINT\s*\(([-\d\.]+)\s+([-\d\.]+)\)/i);
+        if (m) {
+          coordsObj = { longitude: Number(m[1]), latitude: Number(m[2]) };
+        }
+      } else {
+        coordsObj = huntData.coordinates;
+      }
+
+      if (admin.area && coordsObj) {
+        console.log(JSON.parse(admin.coordinates_arr).coordinates[0])
+        const poly = JSON.parse(admin.coordinates_arr).coordinates[0]    //this.parseWktPolygon(admin.area);
+        if (poly.length >= 3) {
+          const inside = this.isPointInPolygon(coordsObj, poly);
+          if (!inside) {
+            throw new AppError('Coordinates are outside the admin geo area', 400);
+          }
+        }
+      }
       
       const [newHunt] = await db
         .insert(huntsTable)
@@ -81,7 +157,7 @@ export class HuntService {
     totalPages: number;
   }> {
     try {
-      const { page = 1, limit = 10, search, task_id, claim_id } = queryParams;
+      const { page = 1, limit = 10, search, task_id, claim_id, admin_id } = queryParams;
       const offset = (page - 1) * limit;
 
       // Build where conditions
@@ -93,6 +169,10 @@ export class HuntService {
 
       if (claim_id) {
         whereConditions.push(eq(huntsTable.claim_id, claim_id));
+      }
+
+      if (admin_id) {
+        whereConditions.push(eq(huntsTable.admin_id as any, admin_id));
       }
 
       if (search) {
@@ -318,7 +398,7 @@ export class HuntService {
   /**
    * Get new near by hunt
    */
-  static async getNewNearByHunt(userId: string ,queryParams: TgetHuntUserQueryParams): Promise<THuntWithClaim> {
+  static async getNewNearByHunt(userId: string ,queryParams: TgetHuntUserQueryParams, admin_id: string): Promise<THunt[]> {
     try {
       // Get hunts with pagination - use PostgreSQL's ST_X and ST_Y functions to extract coordinates directly
       // let whereClause = and(isNull(huntClaimTable.user_id));
@@ -338,8 +418,9 @@ export class HuntService {
         })
         .from(huntsTable)
         .where(
-          notExists(
-            db
+          and(
+            notExists(
+              db
               .select()
               .from(huntClaimTable)
               .where(
@@ -348,12 +429,15 @@ export class HuntService {
                   eq(huntClaimTable.user_id, userId)
                 )
               )
+            ),
+            eq(huntsTable.admin_id, admin_id),
+            lte(huntsTable.start_date, new Date()),
+            gte(huntsTable.end_date, new Date())
           )
         )
-        .limit(1);
+        .limit(10);
         
-      console.log(hunts);
-      return  hunts[0] as THunt;
+      return  hunts as THunt[];
     } catch (error) {
       console.error(error);
       throw new AppError(error.message, 500);

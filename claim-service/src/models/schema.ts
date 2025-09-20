@@ -10,6 +10,7 @@ export const tasksTable = pgTable('tasks', {
   reward:integer('reward').notNull(),
   status:varchar('status', { enum: ['active', 'inactive'] }).default('active'),
   task_type:varchar('task_type', { enum: ['mission', 'question'] }).default('mission'),
+  created_by: uuid('created_by'),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
 });
@@ -22,6 +23,7 @@ export const claimsTable = pgTable('claims', {
   levels: jsonb('levels').$type<Array<{ level: number; user_count: number; rewards: number }> | null>(),
   coupen_code: varchar('coupen_code', { length: 100 }),
   product_img: varchar('product_img', { length: 255 }),
+  created_by: uuid('created_by'),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
 });
@@ -36,6 +38,7 @@ export const huntsTable = pgTable('hunts', {
   end_date: timestamp('end_date'),
   coordinates: text('coordinates').notNull(), // GEOGRAPHY - stored as text
   duration: time('duration'),
+  created_by: uuid('created_by'),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
 });

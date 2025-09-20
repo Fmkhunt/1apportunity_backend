@@ -1,6 +1,8 @@
-import { pgTable, text, timestamp, integer, varchar, jsonb, uuid, time, unique } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, integer, varchar, jsonb, uuid, time, unique, pgEnum } from 'drizzle-orm/pg-core';
 import  crypto from 'node:crypto';
 import { relations } from "drizzle-orm";
+
+// Clue related schema
 
 // Define schema
 export const tasksTable = pgTable('tasks', {
@@ -11,6 +13,8 @@ export const tasksTable = pgTable('tasks', {
   reward:integer('reward').notNull(),
   status:varchar('status', { enum: ['active', 'inactive'] }).default('active'),
   type:varchar('type', { enum: ['mission', 'question'] }).default('mission'),
+  created_by: uuid('created_by'),
+  updated_by: uuid('updated_by'),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
 });
@@ -24,6 +28,7 @@ export const questionsTable = pgTable('questions', {
   options: jsonb('options').$type<
     { option: string; text: string }[]
   >(),
+  created_by: uuid('created_by'),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
 });
@@ -33,6 +38,7 @@ export const claimsTable = pgTable('claims', {
   name: varchar('name', { length: 255 }).notNull(),
   rewards:integer('rewards').notNull(),
   status:varchar('status', { enum: ['active', 'inactive'] }).default('active'),
+  created_by: uuid('created_by'),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
 });
@@ -41,12 +47,14 @@ export const huntsTable = pgTable('hunts', {
   id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   task_id: uuid('task_id').references(() => tasksTable.id).notNull(),
   claim_id: uuid('claim_id').references(() => claimsTable.id).notNull(),
+  admin_id: uuid('admin_id'),
   name: varchar('name', { length: 255 }).notNull(),
   description: text('description').notNull(),
   start_date: timestamp('start_date'),
   end_date: timestamp('end_date'),
   coordinates: text('coordinates').notNull(), // Store as WKT string that will be cast to geography in queries
   duration: time('duration'),
+  created_by: uuid('created_by'),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
 });
@@ -109,10 +117,11 @@ export const huntsRelations = relations(huntsTable, ({ many, one }) => ({
   huntClaims: many(huntClaimTable),
 }));
 
-// Tasks ↔ Hunts & Questions
+// Tasks ↔ Questions & ClueTasks
 export const tasksRelations = relations(tasksTable, ({ many }) => ({
   hunts: many(huntsTable),
   questions: many(questionsTable),
+  clueTasks: many(clueTasksTable),
 }));
 
 // Claims ↔ Hunts & HuntClaims
@@ -120,6 +129,44 @@ export const claimsRelations = relations(claimsTable, ({ many }) => ({
   hunts: many(huntsTable),
   huntClaims: many(huntClaimTable),
 }));
+
+// Clues
+export const cluesTable = pgTable('clues', {
+  id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description').notNull(),
+  created_by: uuid('created_by'),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+});
+
+export const clueTasksTable = pgTable('clue_tasks', {
+  id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  clue_id: uuid('clue_id').notNull().references(() => cluesTable.id, { onDelete: 'cascade' }),
+  task_id: uuid('task_id').notNull().references(() => tasksTable.id, { onDelete: 'cascade' }),
+  created_by: uuid('created_by'),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+}, (table) => ({
+  unq: unique().on(table.clue_id, table.task_id),
+}));
+
+// Relations
+export const cluesRelations = relations(cluesTable, ({ many }) => ({
+  clueTasks: many(clueTasksTable),
+}));
+
+export const clueTasksRelations = relations(clueTasksTable, ({ one }) => ({
+  clue: one(cluesTable, {
+    fields: [clueTasksTable.clue_id],
+    references: [cluesTable.id],
+  }),
+  task: one(tasksTable, {
+    fields: [clueTasksTable.task_id],
+    references: [tasksTable.id],
+  }),
+}));
+
 
 // HuntClaim ↔ Users, Hunts, Tasks, Claims
 export const huntClaimRelations = relations(huntClaimTable, ({ one }) => ({

@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { HuntService } from '../services/hunt.service';
 import { HuntClaimService } from '../services/huntClaim.service';
 import { TaskService } from '../services/task.service';
-import { trpc } from '../trpc/client';
+import { trpc, trpcUser } from '../trpc/client';
 
 import { ResponseHandler } from '../utils/responseHandler';
 import {  TgetHuntUserQueryParams, TAuthenticatedRequest } from '../types';
@@ -19,43 +19,69 @@ export class HuntController {
         latitude: parseFloat(req.query.latitude as string),
         longitude: parseFloat(req.query.longitude as string),
       };
-      let result= null;
-      const userClaim = await HuntClaimService.getCurrrentClaimByUserId(req.user?.userId);
-      if (!userClaim || userClaim?.status=="search") {
-        result = await HuntService.getNewNearByHunt(req.user?.userId, queryParams);
-        console.log(result)
-        if(!result){
-          ResponseHandler.notFound(res, "Hunt not found");
-          return;
-        }
-        const claim = await HuntClaimService.createHuntClaim(req.user?.userId, result.id, result.claim_id, result.task_id, result.duration);
-        result.claim = claim;
-        ResponseHandler.success(res, result, "Hunts retrieved successfully");
-        return;
-      } else {
-        result = await HuntService.getById(userClaim.hunt_id);
-        if(!result){
-          ResponseHandler.notFound(res, "Hunt not found");
-          return;
-        }
-        result.claim = userClaim;
-        ResponseHandler.success(res, result, "Hunts retrieved successfully");
+      let result = null;
+      let admin: any = null;
+      try {
+        admin = await (trpcUser as any).admin.getByCoordinates.query({ latitude: queryParams.latitude, longitude: queryParams.longitude });
+      } catch (e) {
+        console.error(e);
+        ResponseHandler.notFound(res, "Hunt not found");
         return;
       }
-      // const result = await HuntService.getNewNearByHunt(req.user?.userId,null, queryParams);
-      // if(!result){
-      //   ResponseHandler.notFound(res, "Hunt not found");
-      //   return;
-      // }
-      // if(!userClaim){
-      //   const claim = await HuntClaimService.createHuntClaim(req.user?.userId, result.id, result.duration, );
-      //   result.claim = claim;
-      // }else{
-      //   result.claim = userClaim;
-      // }
-      
-      // ResponseHandler.success(res, result, "Hunts retrieved successfully");
-      return;
+
+      if (!admin) {
+        ResponseHandler.notFound(res, "Hunt not found");
+        return;
+      }
+      result = await HuntService.getNewNearByHunt(req.user?.userId, queryParams, admin.id);
+      if (!result) {
+        ResponseHandler.notFound(res, "Hunt not found");
+        return;
+      }
+      ResponseHandler.success(res, result, "Hunts retrieved successfully");
+    } catch (error) {
+      next(error);
+    }
+  }
+  /**
+   * Claim a hunt for the current user
+   * - Checks if an entry already exists in hunt_claim for the same user and hunt
+   * - If not, creates a new hunt_claim with expiry based on hunt.duration
+   */
+  static async claimHunt(req: TAuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      const { hunt_id } = req.body as { hunt_id: string };
+
+      // Validate hunt exists
+      const hunt = await HuntService.getById(hunt_id);
+      if (!hunt) {
+        ResponseHandler.notFound(res, 'Hunt not found');
+        return;
+      }
+
+      // Check if already claimed by this user
+      const existing = await HuntClaimService.findMyHuntClaim(hunt_id, userId);
+      if (existing) {
+        ResponseHandler.conflict(res, 'You have already claimed this hunt');
+        return;
+      }
+
+      if (!hunt.duration) {
+        ResponseHandler.validationError(res, 'Hunt duration not configured');
+        return;
+      }
+
+      // Create the hunt claim
+      const created = await HuntClaimService.createHuntClaim(
+        userId,
+        hunt_id,
+        hunt.claim_id,
+        hunt.task_id,
+        hunt.duration as string,
+      );
+
+      ResponseHandler.created(res, created, 'Hunt claimed successfully');
     } catch (error) {
       next(error);
     }

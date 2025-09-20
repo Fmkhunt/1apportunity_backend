@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import { TApiResponse } from '../types';
+import { send } from 'process';
 
 export class ResponseHandler {
   /**
@@ -47,6 +48,17 @@ export class ResponseHandler {
     errors: any = null
   ): Response {
     return this.error(res, message, 400, errors);
+  }
+
+  /**
+   * Send bad request response
+   */
+  static badRequest(
+    res: Response,
+    message: string = 'Bad Request',
+    data: any = null
+  ): Response {
+    return this.error(res, message, 400, data);
   }
 
   /**

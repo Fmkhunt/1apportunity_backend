@@ -8,6 +8,7 @@ export const taskValidation = {
     reward: Joi.number().integer().min(1).required(),
     status: Joi.string().valid('active', 'inactive').default('active'),
     type: Joi.string().valid('question', 'mission').required(),
+    clue_ids: Joi.array().items(Joi.string().uuid()).optional(),
     questions: Joi.array().when('type', {
       is: 'question',
       then: Joi.array().items(Joi.object({
@@ -32,6 +33,7 @@ export const taskValidation = {
     reward: Joi.number().integer().min(1).optional(),
     status: Joi.string().valid('active', 'inactive').optional(),
     updated_by: Joi.string().required(),
+    clue_ids: Joi.array().items(Joi.string().uuid()).optional(),
   }),
 
   query: Joi.object({

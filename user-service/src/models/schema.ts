@@ -17,6 +17,7 @@ export const UsersTable = pgTable('users', {
     youtube: Date | null;
     web: Date | null;
   }>(),
+  created_by: uuid('created_by'),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
 });
@@ -27,6 +28,7 @@ export const otpTable = pgTable('otp', {
     phone: varchar('phone', { length: 15 }).notNull(),
     otp: integer('otp').notNull(),
     expires_at: timestamp('expire_at').notNull(),
+    created_by: uuid('created_by'),
     created_at: timestamp('created_at').defaultNow(),
     updated_at: timestamp('updated_at').defaultNow(),
 });
@@ -36,6 +38,7 @@ export const referralTable = pgTable('reffral', {
   refer_by: uuid('refer_by').references(() => UsersTable.id),
   referred: uuid('referred').references(() => UsersTable.id),
   coin: integer('coin').notNull().default(0),
+  created_by: uuid('created_by'),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
 });

@@ -1,5 +1,5 @@
 import { db } from '../config/database';
-import { tasksTable } from '../models/schema';
+import { tasksTable, clueTasksTable } from '../models/schema';
 import { eq, and, or, like, desc, asc, sql } from 'drizzle-orm';
 import { AppError } from '../utils/AppError';
 import {
@@ -18,20 +18,38 @@ export class TaskService {
    */
   static async create(taskData: TCreateTaskData): Promise<TTask> {
     try {
-      // Extract questions from taskData
-      const { questions, ...taskDataWithoutQuestions } = taskData;
+      return await db.transaction(async (tx) => {
+        // Extract questions and clue_ids from taskData
+        const { questions, clue_ids, ...taskDataWithoutExtras } = taskData;
 
-      // Create the task
-      const [newTask] = await db
-        .insert(tasksTable)
-        .values({
-          ...taskDataWithoutQuestions,
-          created_at: new Date(),
-          updated_at: new Date(),
-        })
-        .returning();
+        // Create the task
+        const [newTask] = await tx
+          .insert(tasksTable)
+          .values({
+            ...taskDataWithoutExtras,
+            created_at: new Date(),
+            updated_at: new Date(),
+          })
+          .returning();
 
-      return newTask as TTask;
+        // If clue_ids are provided, create clue-task associations
+        if (clue_ids && clue_ids.length > 0) {
+          await tx.insert(clueTasksTable).values(
+            clue_ids.map(clueId => ({
+              clue_id: clueId,
+              task_id: newTask.id,
+              created_by: taskData.created_by,
+              created_at: new Date(),
+              updated_at: new Date(),
+            }))
+          );
+        }
+
+        return {
+          ...newTask,
+          clue_ids: clue_ids || []
+        } as TTask;
+      });
     } catch (error) {
       throw new AppError(error.message, 500);
     }
@@ -92,8 +110,23 @@ export class TaskService {
 
       const totalPages = Math.ceil(count / limit);
 
+      // Get clue associations for each task
+      const tasksWithClues = await Promise.all(
+        tasks.map(async (task) => {
+          const clueTasks = await db.query.clueTasksTable.findMany({
+            where: eq(clueTasksTable.task_id, task.id),
+            columns: { clue_id: true },
+          });
+
+          return {
+            ...task,
+            clue_ids: clueTasks.map(ct => ct.clue_id),
+          } as TTask;
+        })
+      );
+
       return {
-        tasks: tasks as TTask[],
+        tasks: tasksWithClues,
         totalRecords: count,
         page,
         limit,
@@ -115,7 +148,20 @@ export class TaskService {
         .where(eq(tasksTable.id, taskId))
         .limit(1);
 
-      return task[0] as TTask || null;
+      if (!task[0]) {
+        return null;
+      }
+
+      // Get clue associations
+      const clueTasks = await db.query.clueTasksTable.findMany({
+        where: eq(clueTasksTable.task_id, taskId),
+        columns: { clue_id: true },
+      });
+
+      return {
+        ...task[0],
+        clue_ids: clueTasks.map(ct => ct.clue_id),
+      } as TTask;
     } catch (error) {
       throw new AppError(error.message, 500);
     }
@@ -126,22 +172,61 @@ export class TaskService {
    */
   static async update(taskId: string, updateData: TUpdateTaskData): Promise<TTask> {
     try {
-      // Check if task exists
-      const existingTask = await this.getById(taskId);
-      if (!existingTask) {
-        throw new AppError('Task not found', 404);
-      }
+      return await db.transaction(async (tx) => {
+        // Check if task exists
+        const existingTask = await tx
+          .select()
+          .from(tasksTable)
+          .where(eq(tasksTable.id, taskId))
+          .limit(1);
 
-      const [updatedTask] = await db
-        .update(tasksTable)
-        .set({
-          ...updateData,
-          updated_at: new Date(),
-        })
-        .where(eq(tasksTable.id, taskId))
-        .returning();
+        if (!existingTask[0]) {
+          throw new AppError('Task not found', 404);
+        }
 
-      return updatedTask as TTask;
+        // Extract clue_ids from updateData
+        const { clue_ids, ...taskUpdateData } = updateData;
+
+        // Update the task
+        const [updatedTask] = await tx
+          .update(tasksTable)
+          .set({
+            ...taskUpdateData,
+            updated_at: new Date(),
+          })
+          .where(eq(tasksTable.id, taskId))
+          .returning();
+
+        // If clue_ids are provided, update the associations
+        if (clue_ids !== undefined) {
+          // Remove all existing clue associations
+          await tx
+            .delete(clueTasksTable)
+            .where(eq(clueTasksTable.task_id, taskId));
+
+          // Add the new associations if any
+          if (clue_ids.length > 0) {
+            await tx.insert(clueTasksTable).values(
+              clue_ids.map(clueId => ({
+                clue_id: clueId,
+                task_id: taskId,
+                created_at: new Date(),
+              }))
+            );
+          }
+        }
+
+        // Get updated clue associations
+        const clueTasks = await tx.query.clueTasksTable.findMany({
+          where: eq(clueTasksTable.task_id, taskId),
+          columns: { clue_id: true },
+        });
+
+        return {
+          ...updatedTask,
+          clue_ids: clueTasks.map(ct => ct.clue_id),
+        } as TTask;
+      });
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
@@ -183,7 +268,22 @@ export class TaskService {
         .where(eq(tasksTable.status, 'active'))
         .orderBy(desc(tasksTable.created_at));
 
-      return tasks as TTask[];
+      // Get clue associations for each task
+      const tasksWithClues = await Promise.all(
+        tasks.map(async (task) => {
+          const clueTasks = await db.query.clueTasksTable.findMany({
+            where: eq(clueTasksTable.task_id, task.id),
+            columns: { clue_id: true },
+          });
+
+          return {
+            ...task,
+            clue_ids: clueTasks.map(ct => ct.clue_id),
+          } as TTask;
+        })
+      );
+
+      return tasksWithClues;
     } catch (error) {
       throw new AppError(error.message, 500);
     }
@@ -210,7 +310,10 @@ export class TaskService {
         .where(eq(tasksTable.id, taskId))
         .returning();
 
-      return updatedTask as TTask;
+      return {
+        ...updatedTask,
+        clue_ids: existingTask.clue_ids || [],
+      } as TTask;
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
@@ -224,22 +327,23 @@ export class TaskService {
    */
   static async getTaskDetails(taskId: string): Promise<TTask & { questions?: TQuestion[] }> {
     try {
-      const tasks = await db
-        .select()
-        .from(tasksTable)
-        .where(eq(tasksTable.id, taskId))
-        .limit(1);
+      const task = await this.getById(taskId);
       
-      const task = tasks[0] as TTask;
+      if (!task) {
+        throw new AppError('Task not found', 404);
+      }
       
       // If task type is 'question', fetch associated questions
-      if (task && task.type === 'question') {
+      if (task.type === 'question') {
         const questions = await QuestionService.getByTaskId(taskId);
         return { ...task, questions };
       }
       
       return task;
     } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
       throw new AppError(error.message, 500);
     }
   }

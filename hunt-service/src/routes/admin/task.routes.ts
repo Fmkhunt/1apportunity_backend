@@ -27,4 +27,13 @@ router.patch( '/:taskId/toggle-status', authenticateAdminToken, TaskController.t
 // Delete task by ID
 router.delete( '/:taskId', authenticateAdminToken, TaskController.delete);
 
+// Add clues to task
+router.post('/:taskId/clues', authenticateAdminToken, TaskController.addCluesToTask);
+
+// Remove clues from task
+router.delete('/:taskId/clues', authenticateAdminToken, TaskController.removeCluesFromTask);
+
+// Get clues for a specific task
+router.get('/:taskId/clues', authenticateAdminToken, TaskController.getTaskClues);
+
 export default router;

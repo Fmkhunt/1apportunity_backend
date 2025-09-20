@@ -10,6 +10,7 @@ router.get('/', authenticateJWT,validateQuery(huntValidation.getHuntForUser), Hu
 router.post('/updateStatus/:huntId', authenticateJWT,validateRequest(huntValidation.updateStatus), HuntController.updateStatus);
 router.post('/completeHunt', authenticateJWT,validateRequest(huntValidation.completeHuntClaim), HuntController.completeHuntClaim);
 router.get('/completeHuntHistory', authenticateJWT,validateQuery(huntValidation.pagination), HuntController.completeHuntHistory);
+router.post('/claim', authenticateJWT, validateRequest(huntValidation.claimHunt), HuntController.claimHunt);
 
 
 export default router;

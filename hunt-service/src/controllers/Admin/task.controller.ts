@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { TaskService } from '../../services/task.service';
 import { QuestionService } from '../../services/question.service';
+import { ClueService } from '../../services/clue.service';
 import { ResponseHandler } from '../../utils/responseHandler';
 import { TCreateTaskData, TUpdateTaskData, TTaskQueryParams, TAuthenticatedAdminRequest, TCreateQuestionData } from '../../types';
 
@@ -10,7 +11,11 @@ export class TaskController {
    */
   static async create(req: TAuthenticatedAdminRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const taskData: TCreateTaskData = req.body;
+      const taskData: TCreateTaskData = {
+        ...req.body,
+        created_by: req.admin?.adminId as string,
+        updated_by: req.admin?.adminId as string,
+      };
 
       // Validate that if task type is 'question', questions array is provided
       if (taskData.type === 'question') {
@@ -46,6 +51,7 @@ export class TaskController {
           answer: q.answer,
           question_type: q.question_type || 'text',
           options: q.options,
+          created_by: req.admin?.adminId as string,
         }));
 
         await QuestionService.createMultiple(questionsToCreate);
@@ -156,6 +162,115 @@ export class TaskController {
       const result = await TaskService.toggleStatus(taskId, updated_by);
 
       ResponseHandler.success(res, result, "Task status toggled successfully");
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Add clues to task
+   */
+  static async addCluesToTask(req: TAuthenticatedAdminRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { taskId } = req.params;
+      const { clue_ids } = req.body;
+
+      if (!clue_ids || !Array.isArray(clue_ids) || clue_ids.length === 0) {
+        ResponseHandler.validationError(res, "clue_ids array is required");
+        return;
+      }
+
+      // Get current task to check if it exists
+      const existingTask = await TaskService.getById(taskId);
+      if (!existingTask) {
+        ResponseHandler.notFound(res, "Task not found");
+        return;
+      }
+
+      // Get current clue associations
+      const currentClueIds = existingTask.clue_ids || [];
+      
+      // Merge with new clue IDs (avoid duplicates)
+      const updatedClueIds = [...new Set([...currentClueIds, ...clue_ids])];
+
+      // Update task with new clue associations
+      const result = await TaskService.update(taskId, {
+        clue_ids: updatedClueIds,
+        updated_by: req.admin?.adminId as string,
+      });
+
+      ResponseHandler.success(res, result, "Clues added to task successfully");
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Remove clues from task
+   */
+  static async removeCluesFromTask(req: TAuthenticatedAdminRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { taskId } = req.params;
+      const { clue_ids } = req.body;
+
+      if (!clue_ids || !Array.isArray(clue_ids) || clue_ids.length === 0) {
+        ResponseHandler.validationError(res, "clue_ids array is required");
+        return;
+      }
+
+      // Get current task to check if it exists
+      const existingTask = await TaskService.getById(taskId);
+      if (!existingTask) {
+        ResponseHandler.notFound(res, "Task not found");
+        return;
+      }
+
+      // Get current clue associations and remove specified ones
+      const currentClueIds = existingTask.clue_ids || [];
+      const updatedClueIds = currentClueIds.filter(id => !clue_ids.includes(id));
+
+      // Update task with updated clue associations
+      const result = await TaskService.update(taskId, {
+        clue_ids: updatedClueIds,
+        updated_by: req.admin?.adminId as string,
+      });
+
+      ResponseHandler.success(res, result, "Clues removed from task successfully");
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Get clues for a specific task
+   */
+  static async getTaskClues(req: TAuthenticatedAdminRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { taskId } = req.params;
+
+      // Get task to check if it exists
+      const task = await TaskService.getById(taskId);
+      if (!task) {
+        ResponseHandler.notFound(res, "Task not found");
+        return;
+      }
+
+      // Get clue details for each clue ID
+      const clues = await Promise.all(
+        (task.clue_ids || []).map(async (clueId) => {
+          try {
+            return await ClueService.getClueById(clueId);
+          } catch (error) {
+            // If clue doesn't exist, return null
+            return null;
+          }
+        })
+      );
+
+      // Filter out null values (non-existent clues)
+      const validClues = clues.filter(clue => clue !== null);
+
+      ResponseHandler.success(res, validClues, "Task clues retrieved successfully");
     } catch (error) {
       next(error);
     }

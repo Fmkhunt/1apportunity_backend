@@ -9,7 +9,10 @@ export class HuntController {
    */
   static async create(req: TAuthenticatedAdminRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const huntData: TCreateHuntData = req.body;
+      const huntData: TCreateHuntData = {
+        ...req.body,
+        created_by: req.admin?.adminId as string,
+      };
       
       const result = await HuntService.create(huntData);
 
@@ -30,6 +33,7 @@ export class HuntController {
         search: req.query.search as string | undefined,
         task_id: req.query.task_id as string | undefined,
         claim_id: req.query.claim_id as string | undefined,
+        admin_id: req.query.admin_id as string | undefined,
       };
 
       const result = await HuntService.getAll(queryParams);

@@ -127,6 +127,7 @@ export type TTask = {
   type: 'mission' | 'question';
   created_at?: Date;
   updated_at?: Date;
+  clue_ids?: string[];
 }
 
 export type TCreateTaskData = {
@@ -138,6 +139,7 @@ export type TCreateTaskData = {
   type?: 'mission' | 'question';
   created_by: string;
   updated_by: string;
+  clue_ids?: string[];
   questions?: {
     question: string;
     answer: string;
@@ -153,6 +155,7 @@ export type TUpdateTaskData = {
   reward?: number;
   status?: 'active' | 'inactive';
   updated_by: string;
+  clue_ids?: string[];
 }
 
 export type TTaskQueryParams = {
@@ -162,6 +165,36 @@ export type TTaskQueryParams = {
   search?: string;
   type?: 'mission' | 'question';
 }
+
+// Clue related types
+export type TClue = {
+  id: string;
+  title: string;
+  description: string;
+  created_by?: string;
+  created_at?: Date;
+  updated_at?: Date;
+  task_ids?: string[];
+};
+
+export type TCreateClueData = {
+  title: string;
+  description: string;
+  created_by: string;
+  task_ids?: string[];
+};
+
+export type TUpdateClueData = {
+  title?: string;
+  description?: string;
+  task_ids?: string[];
+};
+
+export type TClueQueryParams = {
+  page?: number;
+  limit?: number;
+  search?: string;
+};
 
 // Hunt related types
 export type THunt = {
@@ -175,6 +208,7 @@ export type THunt = {
   coordinates: string;
   coordinates_obj?: { latitude: number; longitude: number } | null;
   duration?: string;
+  created_by?: string;
   created_at?: Date;
   updated_at?: Date;
 }
@@ -182,12 +216,18 @@ export type THunt = {
 export type TCreateHuntData = {
   task_id: string;
   claim_id: string;
+  admin_id: string;
   name: string;
   description: string;
   start_date?: Date;
   end_date?: Date;
   coordinates: string | { latitude: number; longitude: number };
   duration?: string;
+  created_by: string;
+}
+export type TCreateClue = {
+  name: string;
+  description: string;
 }
 
 export type TUpdateHuntData = {
@@ -207,6 +247,7 @@ export type THuntQueryParams = {
   search?: string;
   task_id?: string;
   claim_id?: string;
+  admin_id?: string;
 }
 export type TgetHuntUserQueryParams = {
   latitude?: number;
@@ -220,6 +261,7 @@ export type THuntClaim = {
   task_id: string | null;
   status: string;
   coins: number;
+  created_by?: string;
   created_at?: Date;
   updated_at?: Date;
   expire_at?: Date;
@@ -242,6 +284,7 @@ export type TCreateQuestionData = {
   answer: string;
   question_type?: 'text' | 'mcq';
   options?: { option: string; text: string }[];
+  created_by?: string;
 }
 
 export type TQuestion = {
@@ -251,6 +294,7 @@ export type TQuestion = {
   answer: string;
   question_type: 'text' | 'mcq';
   options?: { option: string; text: string }[];
+  created_by?: string;
   created_at: Date;
   updated_at: Date;
 }

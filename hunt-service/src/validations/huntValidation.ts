@@ -16,6 +16,7 @@ export const huntValidation = {
       }).required()
     ),
     duration: Joi.string().pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/).optional(),
+    admin_id: Joi.string().uuid().required(),
   }),
   update: Joi.object({
     task_id: Joi.string().uuid().optional(),
@@ -32,6 +33,7 @@ export const huntValidation = {
       }).optional()
     ),
     duration: Joi.string().pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/).optional(),
+    admin_id: Joi.string().uuid().required(),
   }),
 
   query: Joi.object({
@@ -40,6 +42,7 @@ export const huntValidation = {
     search: Joi.string().min(1).optional(),
     task_id: Joi.string().uuid().optional(),
     claim_id: Joi.string().uuid().optional(),
+    admin_id: Joi.string().uuid().optional(),
   }),
   getHuntForUser: Joi.object({
     latitude: Joi.number().min(-90).max(90).required(),
@@ -55,6 +58,9 @@ export const huntValidation = {
       question_id: Joi.string().uuid().required(),
       answer: Joi.string().required(),
     })),
+  }),
+  claimHunt: Joi.object({
+    hunt_id: Joi.string().uuid().required(),
   }),
   pagination: Joi.object({
     page: Joi.number().integer().min(1).default(1),

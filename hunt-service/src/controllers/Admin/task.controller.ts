@@ -109,7 +109,11 @@ export class TaskController {
   static async update(req: TAuthenticatedAdminRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { taskId } = req.params;
-      const updateData: TUpdateTaskData = req.body;
+      const updateData: TUpdateTaskData = {
+        ...req.body,
+        updated_by: req.admin?.adminId as string,
+      };
+
       const result = await TaskService.update(taskId, updateData);
 
       ResponseHandler.success(res, result, "Task updated successfully");

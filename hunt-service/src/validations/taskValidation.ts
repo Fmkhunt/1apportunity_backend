@@ -9,6 +9,7 @@ export const taskValidation = {
     status: Joi.string().valid('active', 'inactive').default('active'),
     type: Joi.string().valid('question', 'mission').required(),
     clue_ids: Joi.array().items(Joi.string().uuid()).optional(),
+    claim_id: Joi.string().uuid().required(),
     questions: Joi.array().when('type', {
       is: 'question',
       then: Joi.array().items(Joi.object({
@@ -32,8 +33,8 @@ export const taskValidation = {
     duration: Joi.string().pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/).optional(),
     reward: Joi.number().integer().min(1).optional(),
     status: Joi.string().valid('active', 'inactive').optional(),
-    updated_by: Joi.string().required(),
     clue_ids: Joi.array().items(Joi.string().uuid()).optional(),
+    claim_id: Joi.string().uuid().optional(),
   }),
 
   query: Joi.object({

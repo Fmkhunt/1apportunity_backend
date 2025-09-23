@@ -20,20 +20,20 @@ export class HuntController {
         longitude: parseFloat(req.query.longitude as string),
       };
       let result = null;
-      let admin: any = null;
+      let zone: any = null;
       try {
-        admin = await (trpcUser as any).admin.getByCoordinates.query({ latitude: queryParams.latitude, longitude: queryParams.longitude });
+        zone = await (trpcUser as any).zone.getByCoordinates.query({ latitude: queryParams.latitude, longitude: queryParams.longitude });
       } catch (e) {
         console.error(e);
-        ResponseHandler.notFound(res, "Hunt not found");
+        ResponseHandler.notFound(res, "Hunt zone not found");
         return;
       }
 
-      if (!admin) {
-        ResponseHandler.notFound(res, "Hunt not found");
+      if (!zone) {
+        ResponseHandler.notFound(res, "We are not available in this area");
         return;
       }
-      result = await HuntService.getNewNearByHunt(req.user?.userId, queryParams, admin.id);
+      result = await HuntService.getNewNearByHunt(req.user?.userId, queryParams, zone.id);
       if (!result) {
         ResponseHandler.notFound(res, "Hunt not found");
         return;

@@ -70,24 +70,25 @@ export class HuntService {
    */
   static async create(huntData: TCreateHuntData): Promise<THunt> {
     try {
-      // 1) Validate admin
-      if (!huntData.admin_id) {
-        throw new AppError('admin_id is required', 400);
+      // 1) Validate zone
+      if (!huntData.zone_id) {
+        throw new AppError('zone_id is required', 400);
       }
 
-      let admin: any = null;
+      let zone: any = null;
       try {
-        admin = await (trpcUser as any).admin.getById.query(huntData.admin_id);
+        zone = await (trpcUser as any).zone.getById.query(huntData.zone_id);
       } catch (e) {
         console.error(e)
-        throw new AppError('Failed to validate admin via user-service', 502);
+        throw new AppError('Failed to validate zone via user-service', 502);
+      }
+      console.log("zone",zone);
+      console.log("huntData.zone_id",huntData.zone_id);
+      if (!zone) {
+        throw new AppError('Zone not found', 404);
       }
 
-      if (!admin) {
-        throw new AppError('Admin not found', 404);
-      }
-
-      // 2) Validate coordinates inside admin area (if area exists)
+      // 2) Validate coordinates inside zone area (if area exists)
       const coordinates = this.coordinatesToWKT(huntData.coordinates);
       let coordsObj: { latitude: number; longitude: number } | null = null;
       if (typeof huntData.coordinates === 'string') {
@@ -99,14 +100,12 @@ export class HuntService {
       } else {
         coordsObj = huntData.coordinates;
       }
-
-      if (admin.area && coordsObj) {
-        console.log(JSON.parse(admin.coordinates_arr).coordinates[0])
-        const poly = JSON.parse(admin.coordinates_arr).coordinates[0]    //this.parseWktPolygon(admin.area);
+      if (zone.coordinates_arr && coordsObj) {
+        const poly = JSON.parse(zone.coordinates_arr).coordinates[0];
         if (poly.length >= 3) {
           const inside = this.isPointInPolygon(coordsObj, poly);
           if (!inside) {
-            throw new AppError('Coordinates are outside the admin geo area', 400);
+            throw new AppError('Coordinates are outside the zone geo area', 400);
           }
         }
       }
@@ -156,6 +155,7 @@ export class HuntService {
       
       return result[0] as THunt;
     } catch (error) {
+      console.error(error);
       throw new AppError(error.message, 500);
     }
   }
@@ -171,7 +171,7 @@ export class HuntService {
     totalPages: number;
   }> {
     try {
-      const { page = 1, limit = 10, search, task_id, admin_id } = queryParams;
+      const { page = 1, limit = 10, search, task_id, zone_id } = queryParams;
       const offset = (page - 1) * limit;
 
       // Build where conditions
@@ -179,9 +179,8 @@ export class HuntService {
 
       // task filter handled via join below
 
-
-      if (admin_id) {
-        whereConditions.push(eq(huntsTable.admin_id as any, admin_id));
+      if (zone_id) {
+        whereConditions.push(eq(huntsTable.zone_id as any, zone_id));
       }
 
       if (search) {
@@ -251,7 +250,7 @@ export class HuntService {
 
       return {
         hunts: hunts as THunt[],
-        totalRecords: count,
+        totalRecords: Number(count),
         page,
         limit,
         totalPages,
@@ -273,10 +272,10 @@ export class HuntService {
             CASE 
               WHEN ${huntsTable.coordinates} IS NOT NULL THEN 
                 jsonb_build_object(
-                  'latitude', ST_Y(${huntsTable.coordinates}::geometry), 
+                  'latitude', ST_Y(${huntsTable.coordinates}::geometry),
                   'longitude', ST_X(${huntsTable.coordinates}::geometry)
                 )
-              ELSE NULL 
+              ELSE NULL
             END
           `
         })
@@ -417,7 +416,7 @@ export class HuntService {
   /**
    * Get new near by hunt
    */
-  static async getNewNearByHunt(userId: string ,queryParams: TgetHuntUserQueryParams, admin_id: string): Promise<THunt[]> {
+  static async getNewNearByHunt(userId: string ,queryParams: TgetHuntUserQueryParams, zone_id: string): Promise<THunt[]> {
     try {
       // Get hunts with pagination - use PostgreSQL's ST_X and ST_Y functions to extract coordinates directly
       // let whereClause = and(isNull(huntClaimTable.user_id));
@@ -449,7 +448,7 @@ export class HuntService {
                 )
               )
             ),
-            eq(huntsTable.admin_id, admin_id),
+            eq(huntsTable.zone_id, zone_id),
             lte(huntsTable.start_date, new Date()),
             gte(huntsTable.end_date, new Date())
           )

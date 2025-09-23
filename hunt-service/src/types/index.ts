@@ -216,7 +216,7 @@ export type THunt = {
 }
 
 export type TCreateHuntData = {
-  admin_id: string;
+  zone_id: string;
   name: string;
   description: string;
   start_date?: Date;
@@ -246,7 +246,7 @@ export type THuntQueryParams = {
   limit?: number;
   search?: string;
   task_id?: string;
-  admin_id?: string;
+  zone_id?: string;
 }
 export type TgetHuntUserQueryParams = {
   latitude?: number;

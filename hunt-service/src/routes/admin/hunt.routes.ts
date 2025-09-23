@@ -25,6 +25,6 @@ router.delete('/:huntId', authenticateAdminToken, HuntController.delete);
 router.get('/task/:taskId', authenticateAdminToken, HuntController.getByTaskId);
 
 // Get hunts by claim ID
-router.get('/claim/:claimId', authenticateAdminToken, HuntController.getByClaimId);
+// router.get('/claim/:claimId', authenticateAdminToken, HuntController.getByClaimId);
 
 export default router;

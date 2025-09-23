@@ -32,7 +32,7 @@ export class HuntController {
         limit: req.query.limit ? parseInt(req.query.limit as string) : 10,
         search: req.query.search as string | undefined,
         task_id: req.query.task_id as string | undefined,
-        admin_id: req.query.admin_id as string | undefined,
+        zone_id: req.query.zone_id as string | undefined,
       };
 
       const result = await HuntService.getAll(queryParams);

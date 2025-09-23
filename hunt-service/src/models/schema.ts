@@ -46,7 +46,7 @@ export const claimsTable = pgTable('claims', {
 
 export const huntsTable = pgTable('hunts', {
   id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  admin_id: uuid('admin_id'),
+  zone_id: uuid('zone_id'),
   name: varchar('name', { length: 255 }).notNull(),
   description: text('description').notNull(),
   start_date: timestamp('start_date'),
@@ -57,6 +57,7 @@ export const huntsTable = pgTable('hunts', {
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
 });
+
 export const UsersTable = pgTable('users', {
   id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   email: varchar('email', { length: 255 }).notNull().unique(),

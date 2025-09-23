@@ -15,6 +15,13 @@
       "when": 1758352683563,
       "tag": "0001_numerous_spitfire",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1758536432063,
+      "tag": "0002_kind_wasp",
+      "breakpoints": true
     }
   ]
 }

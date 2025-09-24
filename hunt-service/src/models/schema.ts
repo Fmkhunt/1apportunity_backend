@@ -113,6 +113,19 @@ export const clueTasksTable = pgTable('clue_tasks', {
   unq: unique().on(table.clue_id, table.task_id),
 }));
 
+export const completeTaskTable = pgTable('complete_task', {
+  id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  hunt_id: uuid('hunt_id').notNull().references(() => huntsTable.id, { onDelete: 'cascade' }),
+  task_id: uuid('task_id').notNull().references(() => tasksTable.id, { onDelete: 'cascade' }),
+  user_id: uuid('user_id').notNull().references(() => UsersTable.id, { onDelete: 'cascade' }),
+  claim_id: uuid('claim_id').references(() => claimsTable.id),
+  rank: integer('rank').notNull(),
+  reward: integer('reward').notNull(),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+}, (table) => ({
+  unq: unique().on(table.hunt_id, table.task_id, table.user_id),
+}));
 
 
 
@@ -136,6 +149,21 @@ export const huntTasksTable = pgTable('hunt_tasks', {
 export const huntsRelations = relations(huntsTable, ({ many }) => ({
   huntTasks: many(huntTasksTable),
   huntClaims: many(huntClaimTable),
+}));
+
+export const completeTasksRelations = relations(completeTaskTable, ({ many, one }) => ({
+  hunt: one(huntsTable, {
+    fields: [completeTaskTable.hunt_id],
+    references: [huntsTable.id],
+  }),
+  task: one(tasksTable, {
+    fields: [completeTaskTable.task_id],
+    references: [tasksTable.id],
+  }),
+  user: one(UsersTable, {
+    fields: [completeTaskTable.user_id],
+    references: [UsersTable.id],
+  }),
 }));
 
 // Tasks ↔ Questions & ClueTasks

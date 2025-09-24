@@ -43,4 +43,13 @@ export const taskValidation = {
     status: Joi.string().valid('active', 'inactive').optional(),
     search: Joi.string().min(1).optional(),
   }),
+
+  completeTask: Joi.object({
+    hunt_id: Joi.string().uuid().required(),
+    task_id: Joi.string().uuid().required(),
+    answers: Joi.array().items(Joi.object({
+      question_id: Joi.string().uuid().required(),
+      answer: Joi.string().required(),
+    })).optional(),
+  }),
 };

@@ -1,5 +1,5 @@
 import { db } from '../config/database';
-import { tasksTable, clueTasksTable } from '../models/schema';
+import { tasksTable, clueTasksTable, huntTasksTable, completeTaskTable } from '../models/schema';
 import { eq, and, or, like, desc, asc, sql } from 'drizzle-orm';
 import { AppError } from '../utils/AppError';
 import {
@@ -11,6 +11,7 @@ import {
 } from '../types';
 import { QuestionService } from './question.service';
 import { HuntClaimService } from './huntClaim.service';
+import { trpc } from '../trpc/client';
 
 export class TaskService {
   /**
@@ -21,7 +22,6 @@ export class TaskService {
       return await db.transaction(async (tx) => {
         // Extract questions and clue_ids from taskData
         const { questions, clue_ids, ...taskDataWithoutExtras } = taskData;
-        console.log("taskDataWithoutExtras",taskDataWithoutExtras);
         // Create the task
         const [newTask] = await tx
           .insert(tasksTable)
@@ -351,5 +351,161 @@ export class TaskService {
     /**
    * Complete task
    */
+    static async getTaskListForUsers(userId: string, huntId: string): Promise<any> {
+      try {
+        const huntClaim = await db
+        .select({
+          id: tasksTable.id,
+          name: tasksTable.name,
+          description: tasksTable.description,
+          duration: tasksTable.duration,
+          reward: tasksTable.reward,
+          type: tasksTable.type,
+          status: tasksTable.status,
+          taskStatus: sql<string>`
+            CASE 
+              WHEN ${completeTaskTable.id} IS NOT NULL THEN 'completed'
+              ELSE 'pending'
+            END
+          `,
+        })
+        .from(huntTasksTable)
+        .innerJoin(tasksTable, eq(huntTasksTable.task_id, tasksTable.id))
+        .leftJoin(
+          completeTaskTable,
+          and(
+            eq(completeTaskTable.task_id, tasksTable.id),
+            eq(completeTaskTable.hunt_id, huntTasksTable.hunt_id),
+            eq(completeTaskTable.user_id, userId)
+          )
+        )
+        .where(eq(huntTasksTable.hunt_id, huntId));
+
+      return huntClaim;
+      } catch (error) {
+        if (error instanceof AppError) {
+          throw error;
+        }
+        throw new AppError(error.message, 500);
+      }
+    }
+
+  /**
+   * Complete a task for a user
+   */
+  static async completeTask(
+    userId: string, 
+    huntId: string, 
+    taskId: string, 
+    answers?: { question_id: string, answer: string }[]
+  ): Promise<any> {
+    try {
+      return await db.transaction(async (tx) => {
+        // Check if task exists and get task details
+        const [task] = await tx
+          .select()
+          .from(tasksTable)
+          .where(eq(tasksTable.id, taskId))
+          .limit(1);
+
+        if (!task) {
+          throw new AppError('Task not found', 404);
+        }
+        // Check if user has already completed this task
+        const existingCompletion = await tx
+          .select()
+          .from(completeTaskTable)
+          .where(
+            and(
+              eq(completeTaskTable.hunt_id, huntId),
+              eq(completeTaskTable.task_id, taskId),
+              eq(completeTaskTable.user_id, userId)
+            )
+          )
+          .limit(1);
+
+        if (existingCompletion[0]) {
+          throw new AppError('Task already completed by this user', 400);
+        }
+        // Verify answers if task type is question
+        if (task.type === 'question') {
+          if (!answers || answers.length === 0) {
+            throw new AppError('Answers are required for question type tasks', 400);
+          }
+          
+          const isCorrect = await QuestionService.verifyAnswer(taskId, answers);
+          if (!isCorrect) {
+            throw new AppError('Incorrect answers provided', 400);
+          }
+        }
+        // Get claim data if task has claim_id
+        let claimData = null;
+        if (task.claim_id) {
+          try {
+            // Import trpc client dynamically to avoid circular dependency
+            console.log("task.claim_id", task.claim_id);
+            claimData = await (trpc as any).claim.getById.query(task.claim_id);
+
+          } catch (error) {
+            console.error('Error fetching claim data:', error);
+            throw new AppError('Error fetching claim data', 500);
+            // Continue without claim data if not available
+          }
+        }
+        // Calculate rank (count of users who completed this task before)
+        const completedCount = await tx
+          .select({ count: sql<number>`count(*)` })
+          .from(completeTaskTable)
+          .where(
+            and(
+              eq(completeTaskTable.hunt_id, huntId),
+              eq(completeTaskTable.task_id, taskId)
+            )
+          );
+        const rank = Number(completedCount[0].count) + 1;
+
+        // Calculate reward based on claim levels and rank
+        let reward = 0;
+        if (claimData && claimData.levels && Array.isArray(claimData.levels)) {
+          // Find the appropriate level based on rank
+          // Sort levels by level number to ensure correct order
+          const sortedLevels = claimData.levels.sort((a, b) => a.level - b.level);
+          console.log("sortedLevels", sortedLevels);
+          // Calculate cumulative user counts for each level
+          let cumulativeCount = 0;
+          for (const level of sortedLevels) {
+            cumulativeCount += level.user_count;
+            if (rank <= cumulativeCount) {
+              reward = level.rewards;
+              break;
+            }
+          }
+        }
+
+        // Insert the completed task
+        const [completedTask] = await tx
+          .insert(completeTaskTable)
+          .values({
+            hunt_id: huntId,
+            task_id: taskId,
+            user_id: userId,
+            claim_id: task.claim_id,
+            rank: rank,
+            reward: reward,
+            created_at: new Date(),
+            updated_at: new Date(),
+          })
+          .returning();
+
+        return completedTask;
+      });
+    } catch (error) {
+      console.error(error);
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(error.message, error.statusCode || 500);
+    }
+  }
   
 }

@@ -50,7 +50,7 @@ class App {
 
     // CORS configuration
     const corsOptions = {
-      origin: process.env.APP_URL || 'http://localhost:3000',
+      origin: [process.env.APP_URL, process.env.FRONTEND_URL] || 'http://localhost:3000',
       credentials: true,
       optionsSuccessStatus: 200,
     };

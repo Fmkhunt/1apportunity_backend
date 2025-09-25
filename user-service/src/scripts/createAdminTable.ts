@@ -12,6 +12,7 @@ async function createAdminTable() {
     console.log('Creating default admin user...');
 
     const defaultAdmin = {
+      name: 'Admin',
       email: 'admin@example.com',
       password: 'admin123456',
       role: 'admin',
@@ -29,6 +30,7 @@ async function createAdminTable() {
     const admin = await AdminModel.create(defaultAdmin);
     console.log('Default admin user created successfully:', {
       id: admin.id,
+      name: admin.name,
       email: admin.email,
       role: admin.role,
     });

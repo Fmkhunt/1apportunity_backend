@@ -8,6 +8,7 @@ export const authValidation = {
   }),
   
   adminCreate: Joi.object({
+    name: Joi.string().max(100).required(),
     email: Joi.string().email().required(),
     password: Joi.string().min(6).required(),
     role: Joi.string().default('manager'),
@@ -16,6 +17,7 @@ export const authValidation = {
   }),
   
   adminUpdate: Joi.object({
+    name: Joi.string().max(100).optional(),
     email: Joi.string().email().optional(),
     password: Joi.string().min(6).optional(),
     role: Joi.string().optional(),
@@ -24,6 +26,7 @@ export const authValidation = {
   }),
 
   zoneManagerCreate: Joi.object({
+    name: Joi.string().max(100).required(),
     email: Joi.string().email().required(),
     password: Joi.string().min(6).required(),
     role: Joi.string().valid('zone_manager').default('zone_manager'),
@@ -32,6 +35,7 @@ export const authValidation = {
   }),
   
   zoneManagerUpdate: Joi.object({
+    name: Joi.string().max(100).optional(),
     email: Joi.string().email().optional(),
     password: Joi.string().min(6).optional(),
     role: Joi.string().valid('zone_manager').optional(),

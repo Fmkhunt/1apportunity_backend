@@ -6,6 +6,7 @@ export type TAdminRequest = Request & {
 }
 export type TAdmin = {
   id: string;
+  name: string;
   email: string;
   password: string;
   role: string;
@@ -16,6 +17,7 @@ export type TAdmin = {
 }
 
 export type TAdminCreate = {
+  name: string;
   email: string;
   password: string;
   role?: string;
@@ -24,6 +26,7 @@ export type TAdminCreate = {
 }
 
 export type TAdminUpdate = {
+  name?: string;
   email?: string;
   password?: string;
   role?: string;

@@ -10,7 +10,6 @@ export class AdminModel {
    */
   static async create(adminData: TAdminCreate): Promise<TAdmin> {
     const hashedPassword = await bcrypt.hash(adminData.password, 12);
-    console.log("adminData", adminData);
     const [admin] = await db.insert(AdminTable).values({
       ...adminData,
       password: hashedPassword,

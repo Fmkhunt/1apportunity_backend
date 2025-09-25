@@ -50,7 +50,7 @@ class App {
 
     // CORS configuration
     const corsOptions = {
-      origin: [process.env.APP_URL, process.env.FRONTEND_URL],
+      origin:  process.env.FRONTEND_URL,
       credentials: true,
       optionsSuccessStatus: 200,
     };

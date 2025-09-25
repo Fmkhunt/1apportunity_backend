@@ -5,6 +5,7 @@ export const zoneValidation = {
     name: Joi.string().max(100).required(),
     description: Joi.string().allow(''),
     area: Joi.string().allow(''),
+    city: Joi.string().max(100).required(),
     service_location_id: Joi.string().uuid().required(),
     coordinates: Joi.array().items(
       Joi.object({
@@ -18,6 +19,7 @@ export const zoneValidation = {
     name: Joi.string().max(100),
     description: Joi.string().allow(''),
     area: Joi.string().allow(''),
+    city: Joi.string().max(100),
     service_location_id: Joi.string().uuid(),
     coordinates: Joi.array().items(
       Joi.object({

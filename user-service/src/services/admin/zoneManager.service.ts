@@ -16,6 +16,7 @@ export class ZoneManagerService {
     // const polygon = this.coordinatesToWKT(data.coordinates || []);
     const hashedPassword = await bcrypt.hash(data.password, 12);
     const [admin] = await db.insert(AdminTable).values({
+      name: data.name,
       email: data.email,
       password: hashedPassword,
       role: 'zone_manager',
@@ -74,6 +75,7 @@ export class ZoneManagerService {
       where: eq(AdminTable.id, id),
       columns: {
         id: true,
+        name: true,
         email: true,
         role: true,
         // area: true,

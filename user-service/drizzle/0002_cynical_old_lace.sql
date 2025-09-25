@@ -1,0 +1,1 @@
+ALTER TABLE "zone" ADD COLUMN "city" varchar(100) NOT NULL;

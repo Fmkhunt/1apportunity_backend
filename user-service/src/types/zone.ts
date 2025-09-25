@@ -3,6 +3,7 @@ export type TZone = {
   name: string;
   description?: string;
   area?: string;
+  city: string;
   service_location_id: string;
   coordinates_arr?: {
     type: string;
@@ -16,6 +17,7 @@ export type TZoneCreate = {
   name: string;
   description?: string;
   area?: string;
+  city: string;
   service_location_id: string;
   coordinates?: { latitude: number; longitude: number }[];
 }
@@ -24,6 +26,7 @@ export type TZoneUpdate = {
   name?: string;
   description?: string;
   area?: string;
+  city?: string;
   service_location_id?: string;
   coordinates?: { latitude: number; longitude: number }[];
 }

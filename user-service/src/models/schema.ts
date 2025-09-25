@@ -64,6 +64,7 @@ export const ZoneTable = pgTable('zone', {
   description: text('description'),
   area: text('area'), // GEOMETRY(POLYGON, 4326) - stored as text for now
   service_location_id: uuid('service_location_id').references(() => ServiceLocationTable.id).notNull(),
+  city: varchar('city', { length: 100 }),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
 });
@@ -71,6 +72,7 @@ export const ZoneTable = pgTable('zone', {
 // Admin table schema
 export const AdminTable = pgTable('admin', {
   id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: varchar('name', { length: 100 }),
   email: varchar('email', { length: 200 }).notNull().unique(),
   password: varchar('password', { length: 200 }).notNull(),
   role: varchar('role', { length: 50 }).default('manager'),

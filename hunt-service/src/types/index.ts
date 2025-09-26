@@ -174,6 +174,7 @@ export type TClue = {
   id: string;
   title: string;
   description: string;
+  token?: number;
   created_by?: string;
   created_at?: Date;
   updated_at?: Date;
@@ -183,6 +184,7 @@ export type TClue = {
 export type TCreateClueData = {
   title: string;
   description: string;
+  token?: number;
   created_by: string;
   task_ids?: string[];
 };
@@ -221,6 +223,7 @@ export type TCreateHuntData = {
   description: string;
   start_date?: Date;
   end_date?: Date;
+  radius?: number;
   coordinates: string | { latitude: number; longitude: number };
   duration?: string;
   created_by: string;
@@ -236,6 +239,7 @@ export type TUpdateHuntData = {
   description?: string;
   start_date?: Date;
   end_date?: Date;
+  radius?: number;
   coordinates?: string | { latitude: number; longitude: number };
   duration?: string;
   task_ids?: string[];

@@ -82,8 +82,6 @@ export class HuntService {
         console.error(e)
         throw new AppError('Failed to validate zone via user-service', 502);
       }
-      console.log("zone",zone);
-      console.log("huntData.zone_id",huntData.zone_id);
       if (!zone) {
         throw new AppError('Zone not found', 404);
       }

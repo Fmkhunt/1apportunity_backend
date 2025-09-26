@@ -17,6 +17,7 @@ export class ClueService {
           .values({
             title: data.title,
             description: data.description,
+            token: data.token,
             created_by: data.created_by,
             created_at: new Date(),
             updated_at: new Date(),

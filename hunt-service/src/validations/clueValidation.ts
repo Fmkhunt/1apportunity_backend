@@ -5,12 +5,14 @@ export const clueValidation = {
     title: Joi.string().min(1).max(255).required(),
     description: Joi.string().min(1).required(),
     task_ids: Joi.array().items(Joi.string().uuid()).optional().default([]),
+    token: Joi.number().optional(),
   }),
 
   update: Joi.object({
     title: Joi.string().min(1).max(255).optional(),
     description: Joi.string().min(1).optional(),
     task_ids: Joi.array().items(Joi.string().uuid()).optional(),
+    token: Joi.number().optional(),
   }).min(1), // At least one field is required for update
 
   updateTasks: Joi.object({

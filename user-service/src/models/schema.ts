@@ -12,12 +12,7 @@ export const UsersTable = pgTable('users', {
   referral_code: varchar('referral_code', { length: 10 }).notNull().unique(),
   referral_by: varchar('referral_by', { length: 10 }).references(() => UsersTable.referral_code),
   status: varchar('status', { enum: ['active', 'inactive', 'pending'] }).default('pending'),
-  last_task_at: jsonb('last_task_at').$type<{
-    instagram: Date | null;
-    youtube: Date | null;
-    web: Date | null;
-  }>(),
-  // created_by: uuid('created_by'),
+  token: integer('token').default(0),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
 });
@@ -28,7 +23,6 @@ export const otpTable = pgTable('otp', {
     phone: varchar('phone', { length: 15 }).notNull(),
     otp: integer('otp').notNull(),
     expires_at: timestamp('expire_at').notNull(),
-    // created_by: uuid('created_by'),
     created_at: timestamp('created_at').defaultNow(),
     updated_at: timestamp('updated_at').defaultNow(),
 });
@@ -73,6 +67,7 @@ export const ZoneTable = pgTable('zone', {
 export const AdminTable = pgTable('admin', {
   id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: varchar('name', { length: 100 }),
+  phone: varchar('phone', { length: 15 }),
   email: varchar('email', { length: 200 }).notNull().unique(),
   password: varchar('password', { length: 200 }).notNull(),
   role: varchar('role', { length: 50 }).default('manager'),

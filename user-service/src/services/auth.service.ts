@@ -78,11 +78,7 @@ export class AuthService {
         referral_by,
         referral_code,
         status: 'active',
-        last_task_at: {
-          instagram: null,
-          youtube: null,
-          web: null,
-        },
+        token: 0,
       })
       if(referralUser){
         await ReffralModel.create({
@@ -226,11 +222,12 @@ export class AuthService {
   // }
 
 
-  private static async generateReferralCode(): Promise<string> {
-    const referralCode = '1AP' + generateRandomString(6).toUpperCase();
+  private static async generateReferralCode(count: number = 0): Promise<string> {
+    
+    const referralCode = 'TH' + generateRandomString(count > 5 ? 8 : 6).toUpperCase();
     const user = await db.query.UsersTable.findFirst({where:eq(UsersTable.referral_code, referralCode)});
     if (user) {
-      return this.generateReferralCode();
+      return this.generateReferralCode(count + 1);
     }
     return referralCode;
   }

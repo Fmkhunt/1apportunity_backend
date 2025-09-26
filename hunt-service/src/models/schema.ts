@@ -51,6 +51,7 @@ export const huntsTable = pgTable('hunts', {
   description: text('description').notNull(),
   start_date: timestamp('start_date'),
   end_date: timestamp('end_date'),
+  radius: integer('radius'),  // in meters
   coordinates: text('coordinates').notNull(), // Store as WKT string that will be cast to geography in queries
   duration: time('duration'),
   created_by: uuid('created_by'),
@@ -68,11 +69,7 @@ export const UsersTable = pgTable('users', {
   referral_code: varchar('referral_code', { length: 10 }).notNull().unique(),
   referral_by: varchar('referral_by', { length: 10 }).references(() => UsersTable.referral_code),
   status: varchar('status', { enum: ['active', 'inactive', 'pending'] }).default('pending'),
-  last_task_at: jsonb('last_task_at').$type<{
-    instagram: Date | null;
-    youtube: Date | null;
-    web: Date | null;
-  }>(),
+  token: integer('token').default(0),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
 });
@@ -97,6 +94,7 @@ export const cluesTable = pgTable('clues', {
   id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   title: varchar('title', { length: 255 }).notNull(),
   description: text('description').notNull(),
+  token: integer('token').default(0),
   created_by: uuid('created_by'),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),

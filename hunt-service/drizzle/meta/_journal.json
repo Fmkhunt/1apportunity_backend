@@ -36,6 +36,20 @@
       "when": 1758710222975,
       "tag": "0004_little_morph",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1758882943314,
+      "tag": "0005_pale_firelord",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1758882979763,
+      "tag": "0006_happy_silvermane",
+      "breakpoints": true
     }
   ]
 }

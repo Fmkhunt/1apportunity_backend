@@ -16,6 +16,7 @@ export const huntValidation = {
     ),
     duration: Joi.string().pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/).optional(),
     zone_id: Joi.string().uuid().required(),
+    radius: Joi.number().required(),
   }),
   update: Joi.object({
     task_ids: Joi.array().items(Joi.string().uuid()).min(1).optional(),
@@ -32,6 +33,7 @@ export const huntValidation = {
     ),
     duration: Joi.string().pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/).optional(),
     zone_id: Joi.string().uuid().optional(),
+    radius: Joi.number().optional(),
   }),
 
   query: Joi.object({

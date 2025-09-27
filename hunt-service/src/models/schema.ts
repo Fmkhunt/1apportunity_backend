@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer, varchar, jsonb, uuid, time, unique, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, integer, varchar, jsonb, uuid, time, unique, pgEnum, index } from 'drizzle-orm/pg-core';
 import  crypto from 'node:crypto';
 import { relations } from "drizzle-orm";
 
@@ -109,6 +109,7 @@ export const clueTasksTable = pgTable('clue_tasks', {
   updated_at: timestamp('updated_at').defaultNow(),
 }, (table) => ({
   unq: unique().on(table.clue_id, table.task_id),
+  idx: index().on(table.created_by),
 }));
 
 export const completeTaskTable = pgTable('complete_task', {

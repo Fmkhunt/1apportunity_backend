@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS "clue_tasks_created_by_index" ON "clue_tasks" ("created_by");

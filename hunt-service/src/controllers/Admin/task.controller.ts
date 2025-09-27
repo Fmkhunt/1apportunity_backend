@@ -56,7 +56,7 @@ export class TaskController {
 
         await QuestionService.createMultiple(questionsToCreate);
       }
-      
+      console.log(task);
       ResponseHandler.created(res, task, "Task created successfully");
     } catch (error) {
       next(error);

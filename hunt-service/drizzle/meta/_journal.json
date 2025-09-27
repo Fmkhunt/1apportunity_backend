@@ -50,6 +50,13 @@
       "when": 1758882979763,
       "tag": "0006_happy_silvermane",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1758954357811,
+      "tag": "0007_magical_molly_hayes",
+      "breakpoints": true
     }
   ]
 }

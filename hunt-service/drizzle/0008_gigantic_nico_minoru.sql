@@ -1,0 +1,1 @@
+ALTER TABLE "hunts" ADD COLUMN "max_users" integer;

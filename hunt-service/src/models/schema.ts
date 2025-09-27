@@ -54,6 +54,7 @@ export const huntsTable = pgTable('hunts', {
   radius: integer('radius'),  // in meters
   coordinates: text('coordinates').notNull(), // Store as WKT string that will be cast to geography in queries
   duration: time('duration'),
+  max_users: integer('max_users'),
   created_by: uuid('created_by'),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),

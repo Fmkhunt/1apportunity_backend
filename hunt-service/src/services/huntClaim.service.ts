@@ -25,7 +25,7 @@ export class HuntClaimService {
         .values({
           user_id: userId,
           hunt_id: huntId,
-          status: "search",
+          status: "claimed",
           expire_at: expiredAt,
           created_at: new Date(),
           updated_at: new Date(),

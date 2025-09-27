@@ -211,6 +211,7 @@ export type THunt = {
   coordinates: string;
   coordinates_obj?: { latitude: number; longitude: number } | null;
   duration?: string;
+  max_users?: number;
   created_by?: string;
   created_at?: Date;
   updated_at?: Date;
@@ -226,6 +227,7 @@ export type TCreateHuntData = {
   radius?: number;
   coordinates: string | { latitude: number; longitude: number };
   duration?: string;
+  max_users?: number;
   created_by: string;
   task_ids?: string[];
 }

@@ -45,6 +45,19 @@ class App {
       },
     }));
 
+    this.app.enable("trust proxy");
+    this.app.use((req, res, next) => {
+      console.log("👉=>", req.secure);
+      if (req.secure) {
+        return next();
+      }
+      return res.redirect(308, "https://" + req.headers.host + req.url);
+    });
+    this.app.use((req, _res, next) => {
+      console.log("👉=>", req.method, req.originalUrl);
+      next();
+    });
+
     // CORS configuration
     const corsOptions = {
       origin:  process.env.FRONTEND_URL,

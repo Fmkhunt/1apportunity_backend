@@ -2,6 +2,7 @@ import Joi from 'joi';
 
 export const claimValidation = {
   create: Joi.object({
+    name: Joi.string().min(1).max(255).required(),
     reward: Joi.number().integer().min(1).required(),
     claim_type: Joi.string().min(1).max(255).required(),
     levels: Joi.array().items(
@@ -16,6 +17,7 @@ export const claimValidation = {
   }),
 
   update: Joi.object({
+    name: Joi.string().min(1).max(255).optional(),
     reward: Joi.number().integer().min(1).optional(),
     claim_type: Joi.string().min(1).max(255).optional(),
     levels: Joi.array().items(

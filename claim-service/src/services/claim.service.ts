@@ -66,6 +66,7 @@ export class ClaimService {
         whereConditions.push(
           or(
             like(claimsTable.claim_type, `%${search}%`),
+            like(claimsTable.name, `%${search}%`),
             like(claimsTable.coupen_code, `%${search}%`)
           )
         );

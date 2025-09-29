@@ -1,0 +1,1 @@
+ALTER TABLE "claims" ADD COLUMN "name" varchar(255) NOT NULL;

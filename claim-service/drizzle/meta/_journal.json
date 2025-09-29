@@ -8,6 +8,20 @@
       "when": 1754635816150,
       "tag": "0000_rich_the_enforcers",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1759152444293,
+      "tag": "0001_boring_blackheart",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1759152468913,
+      "tag": "0002_material_yellow_claw",
+      "breakpoints": true
     }
   ]
 }

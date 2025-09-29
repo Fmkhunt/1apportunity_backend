@@ -218,6 +218,7 @@ export type TClaim = {
 }
 
 export type TCreateClaimData = {
+  name: string;
   reward: number;
   claim_type: string;
   levels?: Array<{
@@ -230,6 +231,7 @@ export type TCreateClaimData = {
 }
 
 export type TUpdateClaimData = {
+  name?: string;
   reward?: number;
   claim_type?: string;
   levels?: Array<{

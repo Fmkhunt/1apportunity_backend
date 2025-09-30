@@ -142,25 +142,31 @@ export class TaskService {
    */
   static async getById(taskId: string): Promise<TTask | null> {
     try {
-      const task = await db
-        .select()
-        .from(tasksTable)
-        .where(eq(tasksTable.id, taskId))
-        .limit(1);
+        const task = await db.query.tasksTable.findFirst({
+          where: eq(tasksTable.id, taskId),
+          with: {
+            questions: true,
+            clueTasks: {
+              with: {
+                clue: true,
+              },
+            },
+          },
+        });
 
-      if (!task[0]) {
+      if (!task) {
         return null;
       }
 
       // Get clue associations
-      const clueTasks = await db.query.clueTasksTable.findMany({
-        where: eq(clueTasksTable.task_id, taskId),
-        columns: { clue_id: true },
-      });
+      // const clueTasks = await db.query.clueTasksTable.findMany({
+      //   where: eq(clueTasksTable.task_id, taskId),
+      //   columns: { clue_id: true },
+      // });
 
       return {
-        ...task[0],
-        clue_ids: clueTasks.map(ct => ct.clue_id),
+        ...task,
+        // clue_ids: clueTasks.map(ct => ct.clue_id),
       } as TTask;
     } catch (error) {
       throw new AppError(error.message, 500);

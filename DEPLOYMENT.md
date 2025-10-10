@@ -79,17 +79,11 @@ nano docker-compose.yml
 
 **Update the image names in docker-compose.yml:**
 ```yaml
-# Change these lines:
-image: ghcr.io/your-username/your-repository-user-service:latest
-image: ghcr.io/your-username/your-repository-claim-service:latest
-image: ghcr.io/your-username/your-repository-hunt-service:latest
-image: ghcr.io/your-username/your-repository-wallet-service:latest
-
-# To your actual repository:
-image: ghcr.io/your-actual-username/your-actual-repo-user-service:latest
-image: ghcr.io/your-actual-username/your-actual-repo-claim-service:latest
-image: ghcr.io/your-actual-username/your-actual-repo-hunt-service:latest
-image: ghcr.io/your-actual-username/your-actual-repo-wallet-service:latest
+# Your actual image names:
+image: ghcr.io/fmkhunt/1apportunity-backend-user-service:latest
+image: ghcr.io/fmkhunt/1apportunity-backend-claim-service:latest
+image: ghcr.io/fmkhunt/1apportunity-backend-hunt-service:latest
+image: ghcr.io/fmkhunt/1apportunity-backend-wallet-service:latest
 ```
 
 ### 5. Set Up Nginx

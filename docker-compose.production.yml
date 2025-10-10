@@ -7,7 +7,7 @@ env_file:
 services:
   # User Service
   user-service:
-    image: ghcr.io/your-username/your-repository-user-service:latest
+    image: ghcr.io/fmkhunt/1apportunity-backend-user-service:latest
     container_name: tresurehunt-user-service
     ports:
       - "3000:3000"
@@ -45,7 +45,7 @@ services:
 
   # Claim Service
   claim-service:
-    image: ghcr.io/your-username/your-repository-claim-service:latest
+    image: ghcr.io/fmkhunt/1apportunity-backend-claim-service:latest
     container_name: tresurehunt-claim-service
     ports:
       - "3001:3001"
@@ -77,7 +77,7 @@ services:
 
   # Hunt Service
   hunt-service:
-    image: ghcr.io/your-username/your-repository-hunt-service:latest
+    image: ghcr.io/fmkhunt/1apportunity-backend-hunt-service:latest
     container_name: tresurehunt-hunt-service
     ports:
       - "3002:3002"
@@ -109,7 +109,7 @@ services:
 
   # Wallet Service
   wallet-service:
-    image: ghcr.io/your-username/your-repository-wallet-service:latest
+    image: ghcr.io/fmkhunt/1apportunity-backend-wallet-service:latest
     container_name: tresurehunt-wallet-service
     ports:
       - "3003:3003"

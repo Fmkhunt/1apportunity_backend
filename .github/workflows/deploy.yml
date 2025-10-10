@@ -1,62 +1,74 @@
-name: Build and Deploy Docker Images
+name: Build and Deploy to Server
 
 on:
   push:
     branches: [ main, master ]
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: fmkhunt/1apportunity-backend
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     
-    permissions:
-      contents: read
-      packages: write
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-
-    - name: Log in to Container Registry
-      uses: docker/login-action@v3
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
       with:
-        registry: ${{ env.REGISTRY }}
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        node-version: '22'
+        cache: 'npm'
 
-    - name: Build and push User Service
-      uses: docker/build-push-action@v5
-      with:
-        context: ./user-service
-        push: true
-        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-user-service:latest
+    - name: Install dependencies and build TypeScript
+      run: |
+        # Install dependencies and build each service
+        cd user-service
+        npm install
+        npm run build
+        cd ..
+        
+        cd claim-service
+        npm install
+        npm run build
+        cd ..
+        
+        cd hunt-service
+        npm install
+        npm run build
+        cd ..
+        
+        cd wallet-service
+        npm install
+        npm run build
+        cd ..
 
-    - name: Build and push Claim Service
-      uses: docker/build-push-action@v5
-      with:
-        context: ./claim-service
-        push: true
-        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-claim-service:latest
-
-    - name: Build and push Hunt Service
-      uses: docker/build-push-action@v5
-      with:
-        context: ./hunt-service
-        push: true
-        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-hunt-service:latest
-
-    - name: Build and push Wallet Service
-      uses: docker/build-push-action@v5
-      with:
-        context: ./wallet-service
-        push: true
-        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-wallet-service:latest
+    - name: Create deployment package
+      run: |
+        # Create a clean deployment directory with only compiled JS and necessary files
+        mkdir -p deployment-package
+        
+        # Copy compiled JS and package.json for each service
+        cp -r user-service/dist deployment-package/user-service/
+        cp user-service/package.json deployment-package/user-service/
+        cp user-service/.env deployment-package/user-service/ 2>/dev/null || echo "No .env in user-service"
+        
+        cp -r claim-service/dist deployment-package/claim-service/
+        cp claim-service/package.json deployment-package/claim-service/
+        cp claim-service/.env deployment-package/claim-service/ 2>/dev/null || echo "No .env in claim-service"
+        
+        cp -r hunt-service/dist deployment-package/hunt-service/
+        cp hunt-service/package.json deployment-package/hunt-service/
+        cp hunt-service/.env deployment-package/hunt-service/ 2>/dev/null || echo "No .env in hunt-service"
+        
+        cp -r wallet-service/dist deployment-package/wallet-service/
+        cp wallet-service/package.json deployment-package/wallet-service/
+        cp wallet-service/.env deployment-package/wallet-service/ 2>/dev/null || echo "No .env in wallet-service"
+        
+        # Copy ecosystem config and deploy script
+        cp ecosystem.config.js deployment-package/
+        cp scripts/deploy.sh deployment-package/
+        
+        # Create archive
+        tar -czf deployment.tar.gz -C deployment-package .
 
     - name: Deploy to server
       uses: appleboy/ssh-action@v1.0.3
@@ -66,20 +78,11 @@ jobs:
         password: ${{ secrets.SSH_PASSWORD }}
         port: ${{ secrets.PORT }}
         script: |
-          # Login to GitHub Container Registry
-          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          # Navigate to application directory
+          cd /opt/tresurehunt-backend
           
-          # Pull latest images
-          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-user-service:latest
-          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-claim-service:latest
-          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-hunt-service:latest
-          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-wallet-service:latest
+          # Pull latest code
+          git pull origin main
           
-          # Stop existing containers
-          docker-compose down
-          
-          # Start services with new images
-          docker-compose up -d
-          
-          # Clean up old images
-          docker image prune -f
+          # Run deployment script
+          ./deploy.sh

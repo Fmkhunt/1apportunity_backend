@@ -1,266 +1,218 @@
-# Simple Docker Deployment Guide
+# Simple Server Deployment Guide
 
-## 🎯 What This Does
+This guide shows how to deploy the TresureHunt Backend microservices using Node.js + PM2 + Nginx (no Docker).
 
-- **CI/CD Pipeline**: Builds Docker images and pushes them to GitHub Container Registry
-- **Server Deployment**: Pulls Docker images and runs them on your server
-- **No Git Pull**: Server only needs Docker images, not source code
+## 🎯 What We'll Accomplish
 
-## 🚀 How It Works
+1. **Set up Ubuntu server** with Node.js, PM2, and Nginx
+2. **Configure GitHub Actions CI/CD** for automatic deployment
+3. **Deploy microservices** with PM2 process manager
+4. **Set up reverse proxy** with Nginx
 
-1. **You push code** to GitHub
-2. **GitHub Actions** builds Docker images
-3. **Images are pushed** to GitHub Container Registry
-4. **Server pulls** new images and restarts services
+## 📋 Prerequisites
 
-## 📋 Server Setup (One Time)
+- Ubuntu VPS server (20.04+)
+- GitHub repository with your code
+- SSH access to your server
+- External database credentials
 
-### 1. Install Docker
+## 🚀 Step 1: Server Setup
+
+### 1.1 Connect to Your Server
 
 ```bash
-# Connect to your server
-ssh root@your-server-ip
+# Connect via SSH
+ssh ubuntu@your-server-ip
+```
 
-# Install Docker
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
-sudo usermod -aG docker $USER
+### 1.2 Run Setup Script
 
-# Install Docker Compose
-sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
+```bash
+# Download and run setup script
+wget https://raw.githubusercontent.com/fmkhunt/1apportunity_backend/main/scripts/setup-server.sh
+chmod +x setup-server.sh
+./setup-server.sh
 
-# Logout and login again
+# Log out and back in (important!)
 exit
-ssh root@your-server-ip
+ssh ubuntu@your-server-ip
 ```
 
-### 2. Create Application Directory
+### 1.3 Configure Environment
 
 ```bash
-# Create directory
-sudo mkdir -p /opt/tresurehunt-backend
-sudo chown $USER:$USER /opt/tresurehunt-backend
+# Edit environment files for each service
+nano /opt/tresurehunt-backend/user-service/.env
+nano /opt/tresurehunt-backend/claim-service/.env
+nano /opt/tresurehunt-backend/hunt-service/.env
+nano /opt/tresurehunt-backend/wallet-service/.env
+
+# Update with your actual database credentials:
+# - DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD (for user-service)
+# - DATABASE_URL (for other services)
+# - JWT_SECRET, JWT_REFRESH_SECRET (generate secure keys!)
+```
+
+### 1.4 Clone Repository
+
+```bash
+# Clone your repository
 cd /opt/tresurehunt-backend
+git clone https://github.com/fmkhunt/1apportunity_backend.git .
 ```
 
-### 3. Set Up Environment Files
+## 🔧 Step 2: GitHub Secrets Setup
 
-```bash
-# Create main environment file
-nano .env
-```
+Go to your GitHub repository → Settings → Secrets and variables → Actions
 
-**Add this content to `.env`:**
-```bash
-NODE_ENV=production
-JWT_SECRET=your_super_secure_jwt_secret_key_here
-JWT_REFRESH_SECRET=your_super_secure_refresh_secret_key_here
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=your_email@gmail.com
-EMAIL_PASS=your_app_password
-
-# Database URLs
-CLAIM_DATABASE_URL=postgresql://username:password@your-db-host:5432/claim_db
-HUNT_DATABASE_URL=postgresql://username:password@your-db-host:5432/hunt_db
-WALLET_MONGODB_URI=postgresql://username:password@your-db-host:5432/wallet_db
-```
-
-### 4. Set Up Docker Compose
-
-```bash
-# Copy production docker-compose file
-cp docker-compose.production.yml docker-compose.yml
-
-# Edit docker-compose.yml to use your repository name
-nano docker-compose.yml
-```
-
-**Update the image names in docker-compose.yml:**
-```yaml
-# Your actual image names:
-image: ghcr.io/fmkhunt/1apportunity-backend-user-service:latest
-image: ghcr.io/fmkhunt/1apportunity-backend-claim-service:latest
-image: ghcr.io/fmkhunt/1apportunity-backend-hunt-service:latest
-image: ghcr.io/fmkhunt/1apportunity-backend-wallet-service:latest
-```
-
-### 5. Set Up Nginx
-
-```bash
-# Create Nginx configuration
-sudo nano /etc/nginx/sites-available/tresurehunt
-```
-
-**Add this content:**
-```nginx
-server {
-    listen 80;
-    server_name your-domain.com www.your-domain.com;
-
-    location /api/users/ {
-        proxy_pass http://localhost:3000/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    location /api/claims/ {
-        proxy_pass http://localhost:3001/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    location /api/hunts/ {
-        proxy_pass http://localhost:3002/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    location /api/wallet/ {
-        proxy_pass http://localhost:3003/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
-```bash
-# Enable the site
-sudo ln -s /etc/nginx/sites-available/tresurehunt /etc/nginx/sites-enabled/
-sudo rm /etc/nginx/sites-enabled/default
-sudo nginx -t
-sudo systemctl restart nginx
-```
-
-### 6. Configure Firewall
-
-```bash
-# Allow HTTP and HTTPS
-sudo ufw allow 80
-sudo ufw allow 443
-sudo ufw allow ssh
-sudo ufw enable
-```
-
-## 🔧 GitHub Secrets Setup
-
-Add these secrets to your GitHub repository:
-
-1. Go to your GitHub repository
-2. Click **Settings** → **Secrets and variables** → **Actions**
-3. Add these secrets:
-
+Add these secrets:
 - `HOST`: Your server IP address
-- `USERNAME`: Your server username (usually `root` or `ubuntu`)
+- `USERNAME`: ubuntu (or your server username)
 - `SSH_PASSWORD`: Your server SSH password
-- `PORT`: SSH port (usually `22`)
+- `PORT`: 22
 
-## 🚀 How to Deploy
+## 🔄 Step 3: CI/CD Workflow
 
-### 1. Push Code to GitHub
+### How It Works:
+1. **Push code** → `git push origin main`
+2. **GitHub Actions** builds TypeScript to JavaScript
+3. **Creates deployment package** with only compiled JS files
+4. **SSH to server** and runs deployment script
+5. **PM2 restarts** all services with new compiled code
 
-```bash
-# In your local project
-git add .
-git commit -m "Update code"
-git push origin main
-```
-
-### 2. GitHub Actions Will:
-
-1. Build Docker images for all services
-2. Push images to GitHub Container Registry
-3. SSH to your server
-4. Pull new images
-5. Restart services
-
-### 3. Check Deployment
-
+### Manual Deployment:
 ```bash
 # On your server
 cd /opt/tresurehunt-backend
-docker-compose ps
-docker-compose logs -f
+./deploy.sh
 ```
 
-## 🔍 Troubleshooting
+## 🌐 Service Endpoints
+
+After deployment, your services will be available at:
+
+- **User Service**: `http://your-server-ip/userservice/`
+- **Claim Service**: `http://your-server-ip/claimservice/`
+- **Hunt Service**: `http://your-server-ip/huntservice/`
+- **Wallet Service**: `http://your-server-ip/walletservice/`
+
+## 🔍 Monitoring Commands
+
+```bash
+# Check service status
+pm2 status
+
+# View logs
+pm2 logs
+
+# Monitor system
+/opt/tresurehunt-backend/monitor.sh
+
+# Restart services
+pm2 restart all
+
+# Stop services
+pm2 stop all
+
+# Start services
+pm2 start ecosystem.config.js
+```
+
+## 🛠️ Troubleshooting
 
 ### Services Not Starting
-
 ```bash
+# Check PM2 status
+pm2 status
+
 # Check logs
-docker-compose logs
+pm2 logs
 
-# Check if images exist
-docker images | grep ghcr.io
-
-# Pull images manually
-docker-compose pull
-docker-compose up -d
-```
-
-### Environment Variables Issues
-
-```bash
-# Check environment variables
-docker-compose config
-
-# Check specific service environment
-docker-compose exec user-service env
+# Check if services are built
+ls -la user-service/dist/
+ls -la claim-service/dist/
+ls -la hunt-service/dist/
+ls -la wallet-service/dist/
 ```
 
 ### Database Connection Issues
-
 ```bash
 # Test database connection
-docker-compose exec user-service psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME
+psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME
+
+# Check environment variables
+env | grep DB_
 ```
 
-## 📊 Monitoring
-
-### Check Service Status
-
+### Nginx Issues
 ```bash
-# All services
-docker-compose ps
+# Check Nginx status
+sudo systemctl status nginx
 
-# Specific service logs
-docker-compose logs -f user-service
+# Test configuration
+sudo nginx -t
+
+# Restart Nginx
+sudo systemctl restart nginx
 ```
 
-### Restart Services
+## 📊 Service Architecture
 
-```bash
-# Restart all services
-docker-compose restart
-
-# Restart specific service
-docker-compose restart user-service
+```
+Internet → Nginx (Port 80) → PM2 Processes (Port 3000-3003) → External Databases
 ```
 
-## 🎉 That's It!
-
-Your application will be available at:
-- **Main Application**: `http://your-domain.com`
-- **User Service**: `http://your-domain.com/api/users/`
-- **Claim Service**: `http://your-domain.com/api/claims/`
-- **Hunt Service**: `http://your-domain.com/api/hunts/`
-- **Wallet Service**: `http://your-domain.com/api/wallet/`
+### PM2 Process Management:
+- **User Service**: Port 3000
+- **Claim Service**: Port 3001
+- **Hunt Service**: Port 3002
+- **Wallet Service**: Port 3003
 
 ## 🔄 Daily Workflow
 
-1. **Develop locally**
-2. **Push to GitHub** (`git push origin main`)
-3. **GitHub Actions** automatically deploys
-4. **Check deployment** on your server
+### Development Workflow
 
-No more manual deployment steps!
+1. **Develop locally** on your machine
+2. **Test your changes** locally
+3. **Commit and push** to GitHub:
+   ```bash
+   git add .
+   git commit -m "Your changes"
+   git push origin main
+   ```
+4. **GitHub Actions** automatically deploys
+5. **Check deployment** on your server
+
+## 🎉 Success!
+
+After following this guide, you'll have:
+
+✅ **Ubuntu server** set up with Node.js + PM2 + Nginx  
+✅ **CI/CD pipeline** automatically deploying code  
+✅ **Microservices** running with PM2  
+✅ **Reverse proxy** routing traffic  
+✅ **Monitoring** and logging  
+✅ **Automatic deployments** on every push  
+
+## 🔐 Security Checklist
+
+- [ ] Firewall configured
+- [ ] Strong JWT secrets generated
+- [ ] Database passwords secured
+- [ ] GitHub secrets configured
+- [ ] PM2 processes secured
+- [ ] Regular backups scheduled
+
+## 📞 Support
+
+If you encounter issues:
+1. Check PM2 status: `pm2 status`
+2. Check logs: `pm2 logs`
+3. Verify environment variables
+4. Test database connections
+5. Check firewall settings
+6. Review GitHub Actions logs
+
+---
+
+**🚀 You're all set! Your TresureHunt Backend is now running on your server with PM2 and CI/CD pipeline!**

@@ -6,7 +6,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/1apportunity-backend
+  IMAGE_NAME: fmkhunt/1apportunity-backend
 
 jobs:
   build-and-deploy:

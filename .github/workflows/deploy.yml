@@ -17,61 +17,6 @@ jobs:
       with:
         node-version: '22'
 
-    - name: Install dependencies and build TypeScript
-      run: |
-        # Install dependencies and build each service
-        cd user-service
-        npm install
-        npm run build
-        cd ..
-        
-        cd claim-service
-        npm install
-        npm run build
-        cd ..
-        
-        cd hunt-service
-        npm install
-        npm run build
-        cd ..
-        
-        cd wallet-service
-        npm install
-        npm run build
-        cd ..
-
-    - name: Create deployment package
-      run: |
-        # Create a clean deployment directory with only compiled JS and necessary files
-        mkdir -p deployment-package
-        
-        # Copy compiled JS and package.json for each service
-        cp -r user-service/dist deployment-package/user-service/
-        cp user-service/package.json deployment-package/user-service/
-        cp user-service/.env deployment-package/user-service/ 2>/dev/null || echo "No .env in user-service"
-        
-        cp -r claim-service/dist deployment-package/claim-service/
-        cp claim-service/package.json deployment-package/claim-service/
-        cp claim-service/.env deployment-package/claim-service/ 2>/dev/null || echo "No .env in claim-service"
-        
-        cp -r hunt-service/dist deployment-package/hunt-service/
-        cp hunt-service/package.json deployment-package/hunt-service/
-        cp hunt-service/.env deployment-package/hunt-service/ 2>/dev/null || echo "No .env in hunt-service"
-        
-        cp -r wallet-service/dist deployment-package/wallet-service/
-        cp wallet-service/package.json deployment-package/wallet-service/
-        cp wallet-service/.env deployment-package/wallet-service/ 2>/dev/null || echo "No .env in wallet-service"
-        
-        # Copy ecosystem config and deploy script
-        cp ecosystem.config.js deployment-package/ 2>/dev/null || echo "No ecosystem.config.js found"
-        cp scripts/deploy.sh deployment-package/ 2>/dev/null || echo "No deploy.sh in scripts/"
-        
-        # Create archive
-        tar -czf deployment.tar.gz -C deployment-package .
-        
-        # Upload deployment package to server
-        scp -o StrictHostKeyChecking=no deployment.tar.gz ${{ secrets.USERNAME }}@${{ secrets.HOST }}:/opt/tresurehunt-backend/
-
     - name: Deploy to server
       uses: appleboy/ssh-action@v1.0.3
       with:
@@ -83,27 +28,41 @@ jobs:
           # Navigate to application directory
           cd /opt/tresurehunt-backend
           
-          # Extract deployment package
-          echo "Extracting deployment package..."
-          tar -xzf deployment.tar.gz
-          rm deployment.tar.gz
+          # Clone repository if it doesn't exist
+          if [ ! -d ".git" ]; then
+            echo "Cloning repository..."
+            git clone https://github.com/fmkhunt/1apportunity_backend.git .
+          else
+            echo "Pulling latest code..."
+            git pull origin main
+          fi
           
           # Stop PM2 processes
           pm2 stop all || true
           pm2 delete all || true
           
-          # Install dependencies for each service (only production dependencies)
-          echo "Installing production dependencies..."
+          # Install dependencies and build each service
+          echo "Installing dependencies and building services..."
           
-          services=("user-service" "claim-service" "hunt-service" "wallet-service")
+          cd user-service
+          npm install
+          npm run build
+          cd ..
           
-          for service in "${services[@]}"; do
-            echo "Installing dependencies for $service..."
-            cd $service
-            # Only install production dependencies since we already have compiled JS
-            npm install --production --omit=dev
-            cd ..
-          done
+          cd claim-service
+          npm install
+          npm run build
+          cd ..
+          
+          cd hunt-service
+          npm install
+          npm run build
+          cd ..
+          
+          cd wallet-service
+          npm install
+          npm run build
+          cd ..
           
           # Start services with PM2
           echo "Starting services with PM2..."

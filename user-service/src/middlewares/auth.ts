@@ -63,7 +63,7 @@ export const authenticateAdminToken = async (
     const token = authHeader.split(' ')[1];
 
     // Import AdminAuthService dynamically to avoid circular dependency
-    const { AdminAuthService } = await import('@/services/admin/adminAuth.service');
+    const { AdminAuthService } = await import('../services/admin/adminAuth.service');
 
     // Verify admin token
     const decoded = AdminAuthService.verifyToken(token);
@@ -210,7 +210,7 @@ export const authenticateAdminRefreshToken = async (
     const token = authHeader.split(' ')[1];
 
     // Import AdminAuthService dynamically to avoid circular dependency
-    const { AdminAuthService } = await import('@/services/admin/adminAuth.service');
+    const { AdminAuthService } = await import('../services/admin/adminAuth.service');
 
     // Verify admin token
     const decoded = AdminAuthService.verifyToken(token, true);

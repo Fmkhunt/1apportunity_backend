@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { TApiResponse } from '@/types';
+import { TApiResponse } from '../types';
 
 export class ResponseHandler {
   /**

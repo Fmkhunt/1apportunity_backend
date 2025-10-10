@@ -13,7 +13,12 @@
     "db:generate": "drizzle-kit generate:pg",
     "db:migrate": "drizzle-kit migrate:pg",
     "db:studio": "drizzle-kit studio",
-    "admin:setup": "ts-node src/scripts/createAdminTable.ts"
+    "admin:setup": "ts-node src/scripts/createAdminTable.ts",
+
+    "docker:compose": "docker-compose up --build",
+    "docker:build": "docker build -t tresurehunt-userservice .",
+    "docker:run": "docker run -p 3000:3000 tresurehunt-userservice",
+    "docker:stop": "docker stop tresurehunt-userservice"
   },
   "keywords": [
     "node",

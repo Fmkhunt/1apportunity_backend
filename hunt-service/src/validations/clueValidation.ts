@@ -24,4 +24,9 @@ export const clueValidation = {
     limit: Joi.number().integer().min(1).max(100).default(10),
     search: Joi.string().allow('').optional(),
   }),
+
+  getClueForUser: Joi.object({
+    taskId: Joi.string().uuid().required(),
+  }),
+
 };

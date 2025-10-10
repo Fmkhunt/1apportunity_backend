@@ -1,7 +1,7 @@
 import { Application } from 'express';
-import authRoutes from '@/routes/auth.routes';
-import userRoutes from '@/routes/user.routes';
-import adminRoutes from '@/routes/admin';
+import authRoutes from './auth.routes';
+import userRoutes from './user.routes';
+import adminRoutes from './admin';
 
 export const setupRoutes = (app: Application): void => {
   // API routes

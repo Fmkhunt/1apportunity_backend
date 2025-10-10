@@ -22,7 +22,6 @@ declare global {
 global.basedir = __dirname;
 global.APP_NAME = process.env.APP_NAME || 'TechMultiverse';
 global.APP_URL = process.env.APP_URL || 'http://localhost:3000';
-
 class App {
   public app: Application;
 
@@ -157,6 +156,7 @@ class App {
       // Start server
       const PORT = process.env.PORT || 3000;
       this.app.listen(PORT, () => {
+        console.log("test fenil");
         console.log(`🚀 Server is running on port ${PORT}`);
         console.log(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
         console.log(`🔗 App URL: ${global.APP_URL}`);

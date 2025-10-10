@@ -1,0 +1,56 @@
+{
+  "name": "apportunity-backend",
+  "version": "1.0.0",
+  "description": "Apportunity Backend Microservices",
+  "private": true,
+  "scripts": {
+    "install:all": "npm run install:user && npm run install:claim && npm run install:hunt && npm run install:wallet",
+    "install:user": "cd user-service && npm install",
+    "install:claim": "cd claim-service && npm install",
+    "install:hunt": "cd hunt-service && npm install",
+    "install:wallet": "cd wallet-service && npm install",
+    "build:all": "npm run build:user && npm run build:claim && npm run build:hunt && npm run build:wallet",
+    "build:user": "cd user-service && npm run build",
+    "build:claim": "cd claim-service && npm run build",
+    "build:hunt": "cd hunt-service && npm run build",
+    "build:wallet": "cd wallet-service && npm run build",
+    "test:all": "npm run test:user && npm run test:claim && npm run test:hunt && npm run test:wallet",
+    "test:user": "cd user-service && npm test",
+    "test:claim": "cd claim-service && npm test",
+    "test:hunt": "cd hunt-service && npm test",
+    "test:wallet": "cd wallet-service && npm test",
+    "lint:all": "npm run lint:user && npm run lint:claim && npm run lint:hunt && npm run lint:wallet",
+    "lint:user": "cd user-service && npm run lint",
+    "lint:claim": "cd claim-service && npm run lint",
+    "lint:hunt": "cd hunt-service && npm run lint",
+    "lint:wallet": "cd wallet-service && npm run lint",
+    "dev:all": "concurrently \"npm run dev:user\" \"npm run dev:claim\" \"npm run dev:hunt\" \"npm run dev:wallet\"",
+    "dev:user": "cd user-service && npm run dev",
+    "dev:claim": "cd claim-service && npm run dev",
+    "dev:hunt": "cd hunt-service && npm run dev",
+    "dev:wallet": "cd wallet-service && npm run dev",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:build": "docker-compose build",
+    "docker:logs": "docker-compose logs -f",
+    "docker:restart": "docker-compose restart",
+    "docker:clean": "docker system prune -f"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
+  },
+  "keywords": [
+    "microservices",
+    "nodejs",
+    "typescript",
+    "docker",
+    "postgresql",
+    "express"
+  ],
+  "author": "Apportunity Team",
+  "license": "ISC"
+}

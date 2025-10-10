@@ -1,6 +1,6 @@
-import { db } from '@/config/database';
-import { AdminTable } from '@/models/schema';
-import { AdminModel } from '@/models/Admin';
+import { db } from '../config/database';
+import { AdminTable } from '../models/schema';
+import { AdminModel } from '../models/Admin';
 
 async function createAdminTable() {
   try {

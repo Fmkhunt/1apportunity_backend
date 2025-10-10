@@ -16,11 +16,6 @@ export type TUsers = {
   referral_code?: string;
   referral_by?: string;
   status?: string;
-  last_task_at?: {
-    instagram: Date | null;
-    youtube: Date | null;
-    web: Date | null;
-  };
   created_at?: Date;
   updated_at?: Date;
 }

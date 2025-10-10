@@ -205,5 +205,28 @@ export class ClueService {
       throw new AppError('Failed to list clues', 500);
     }
   }
+  
+  static async getListForUser(taskId: string): Promise<{ data: TClue[] }> {
+    try {
+        const clues = await db.query.clueTasksTable.findMany({
+            where: eq(clueTasksTable.task_id, taskId),
+            with: {
+                clue: {
+                  columns: {
+                    id: true,
+                    title: true,
+                    token: true,
+                    created_at: true,
+                  },
+                },
+            },
+        });
+        return {
+          data: clues.map(clue => clue.clue) as TClue[],
+        };
+    } catch (error) {
+      throw new AppError('Failed to list clues', 500);
+    }
+  }
 
 }

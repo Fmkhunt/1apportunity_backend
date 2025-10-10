@@ -12,7 +12,11 @@
     "lint:fix": "eslint src/**/*.ts --fix",
     "db:generate": "drizzle-kit generate:pg",
     "db:migrate": "drizzle-kit migrate:pg",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "docker:compose": "docker-compose up --build",
+    "docker:build": "docker build -t tresurehunt-huntservice .",
+    "docker:run": "docker run -p 3002:3002 tresurehunt-huntservice",
+    "docker:stop": "docker stop tresurehunt-huntservice"
   },
   "keywords": [
     "node",

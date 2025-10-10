@@ -1,6 +1,3 @@
-import { Request } from 'express';
-import { Document } from 'mongoose';
-
 export interface IUserMaster {
   email: string;
   password?: string;

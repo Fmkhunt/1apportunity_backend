@@ -24,6 +24,7 @@ export const db = drizzle(pool, { schema });
 export const connectDatabase = async (): Promise<void> => {
   try {
     // Test the connection
+    console.log(process.env.DB_HOST);
     const client = await pool.connect();
     await client.query('SELECT NOW()');
     client.release();

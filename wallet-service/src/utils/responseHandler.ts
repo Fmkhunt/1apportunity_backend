@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { apiResponse } from '@/types';
+import { TApiResponse } from '../types';
 
 export class ResponseHandler {
   /**
@@ -11,9 +11,8 @@ export class ResponseHandler {
     message: string = 'Success',
     statusCode: number = 200
   ): Response {
-    const response: apiResponse<T> = {
+    const response: TApiResponse<T> = {
       data,
-      status: 1,
       message,
       success: true,
     };
@@ -30,9 +29,8 @@ export class ResponseHandler {
     statusCode: number = 500,
     data: any = null
   ): Response {
-    const response: apiResponse = {
+    const response: TApiResponse = {
       data,
-      status: 0,
       message,
       success: false,
     };

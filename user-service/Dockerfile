@@ -26,6 +26,9 @@ RUN npm install --only=production
 
 COPY --from=builder /app/dist ./dist
 
+# Copy environment file (if it exists)
+COPY --from=builder /app/.env* ./
+
 # Expose the port your app runs on
 EXPOSE 3000
 

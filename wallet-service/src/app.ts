@@ -5,11 +5,11 @@ import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
-import { connectDatabase } from '@/config/database';
-import { setupRoutes } from '@/routes';
-import { authConfig } from '@/config/auth';
-import { AppError } from '@/utils/AppError';
-import { ResponseHandler } from '@/utils/responseHandler';
+import { connectDatabase } from './config/database';
+import { setupRoutes } from './routes';
+import { authConfig } from './config/auth';
+import { AppError } from './utils/AppError';
+import { ResponseHandler } from './utils/responseHandler';
 
 // Global variables
 declare global {

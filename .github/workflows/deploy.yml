@@ -63,8 +63,8 @@ jobs:
         cp wallet-service/.env deployment-package/wallet-service/ 2>/dev/null || echo "No .env in wallet-service"
         
         # Copy ecosystem config and deploy script
-        cp ecosystem.config.js deployment-package/
-        cp scripts/deploy.sh deployment-package/
+        cp ecosystem.config.js deployment-package/ 2>/dev/null || echo "No ecosystem.config.js found"
+        cp scripts/deploy.sh deployment-package/ 2>/dev/null || echo "No deploy.sh in scripts/"
         
         # Create archive
         tar -czf deployment.tar.gz -C deployment-package .

@@ -12,6 +12,7 @@ import { AppError } from './utils/AppError';
 import { ResponseHandler } from './utils/responseHandler';
 import { createTRPCServer } from './trpc/server';
 
+//test 13-10-2025
 // Global variables
 declare global {
   var basedir: string;

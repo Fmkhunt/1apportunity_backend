@@ -30,11 +30,12 @@ export class TaskController {
       const userId = req.user?.userId;
 
       // const userClaim = await HuntClaimService.getCurrrentClaimByUserId(req.user?.userId);
-      const huntClaim = await HuntClaimService.findMyHuntClaim(huntId, userId);
-      if(!huntClaim) {
-        ResponseHandler.notFound(res, "Hunt claim not found");
-        return;
-      }
+      // changes at 13-10-2025
+      // const huntClaim = await HuntClaimService.findMyHuntClaim(huntId, userId);
+      // if(!huntClaim) {
+      //   ResponseHandler.notFound(res, "Hunt claim not found");
+      //   return;
+      // }
 
       const result = await TaskService.getTaskListForUsers(req.user?.userId, huntId);
       if(!result){

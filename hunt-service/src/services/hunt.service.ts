@@ -268,6 +268,16 @@ export class HuntService {
       const huntRows = await db
         .select({
           ...getTableColumns(huntsTable),
+          coordinates_obj: sql<{ latitude: number; longitude: number } | null>`
+          CASE 
+            WHEN ${huntsTable.coordinates} IS NOT NULL THEN 
+              jsonb_build_object(
+                'latitude', ST_Y(${huntsTable.coordinates}::geometry), 
+                'longitude', ST_X(${huntsTable.coordinates}::geometry)
+              )
+            ELSE NULL 
+          END
+        `
         })
         .from(huntsTable)
         .where(eq(huntsTable.id, huntId))

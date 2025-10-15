@@ -151,6 +151,16 @@ export const huntsRelations = relations(huntsTable, ({ many }) => ({
   huntClaims: many(huntClaimTable),
 }));
 
+export const huntTasksRelations = relations(huntTasksTable, ({ one }) => ({
+  hunt: one(huntsTable, {
+    fields: [huntTasksTable.hunt_id],
+    references: [huntsTable.id],
+  }),
+  task: one(tasksTable, {
+    fields: [huntTasksTable.task_id],
+    references: [tasksTable.id],
+  }),
+}));
 export const completeTasksRelations = relations(completeTaskTable, ({ many, one }) => ({
   hunt: one(huntsTable, {
     fields: [completeTaskTable.hunt_id],

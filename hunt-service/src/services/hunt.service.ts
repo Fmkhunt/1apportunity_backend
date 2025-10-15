@@ -1,5 +1,5 @@
 import { db } from '../config/database';
-import { huntsTable, huntClaimTable, huntTasksTable } from '../models/schema';
+import { huntsTable, huntClaimTable, huntTasksTable, tasksTable } from '../models/schema';
 import { eq, and, or, like, desc, asc, sql, getTableColumns,isNull, ne, notExists, lte, gte } from 'drizzle-orm';
 import { AppError } from '../utils/AppError';
 import {
@@ -8,7 +8,8 @@ import {
   TUpdateHuntData,
   THuntQueryParams,
   TgetHuntUserQueryParams,
-  THuntWithClaim
+  THuntWithClaim,
+  TTask
 } from '../types';
 import { trpcUser } from '../trpc/client';
 
@@ -261,30 +262,34 @@ export class HuntService {
   /**
    * Get hunt by ID
    */
-  static async getById(huntId: string): Promise<THunt | null> {
+  static async getById(huntId: string): Promise<THunt & { tasks: TTask[] } | null> {
     try {
-      const result = await db
+      // Get hunt with its associated tasks
+      const huntRows = await db
         .select({
-          ...getTableColumns(huntsTable),  
-          coordinates_obj: sql<{ latitude: number; longitude: number } | null>`
-            CASE 
-              WHEN ${huntsTable.coordinates} IS NOT NULL THEN 
-                jsonb_build_object(
-                  'latitude', ST_Y(${huntsTable.coordinates}::geometry),
-                  'longitude', ST_X(${huntsTable.coordinates}::geometry)
-                )
-              ELSE NULL
-            END
-          `
+          ...getTableColumns(huntsTable),
         })
         .from(huntsTable)
         .where(eq(huntsTable.id, huntId))
         .limit(1);
 
-      const hunt = result[0];
-      if (!hunt) return null;
-      
-      return hunt;
+      if (!huntRows.length) return null;
+      const hunt = huntRows[0];
+
+      // Get tasks associated with this hunt
+      const taskRows = await db
+        .select({
+          ...getTableColumns(tasksTable),
+        })
+        .from(huntTasksTable)
+        .innerJoin(tasksTable, eq(huntTasksTable.task_id, tasksTable.id))
+        .where(eq(huntTasksTable.hunt_id, huntId));
+
+      // Combine hunt and tasks into result
+      return {
+        ...hunt,
+        tasks: taskRows.map((row) => row)
+      };
     } catch (error) {
       throw new AppError(error.message, 500);
     }

@@ -159,11 +159,8 @@ export class HuntController {
         }
       }
       
-      console.log("task.type",task.type)
       if (task.type == 'question') {
-        console.log("if")
         const checkAns=await QuestionService.verifyAnswer(task_id, answers)
-        console.log("checkAns",checkAns)
         if(!checkAns){
           ResponseHandler.error(res, "answers are incorrect");
           return;

@@ -12,6 +12,8 @@ import {
 import { QuestionService } from './question.service';
 import { HuntClaimService } from './huntClaim.service';
 import { trpc } from '../trpc/client';
+import { MessagePublisherService } from './messagePublisher.service';
+import { HuntService } from './hunt.service';
 
 export class TaskService {
   /**
@@ -502,6 +504,28 @@ export class TaskService {
             updated_at: new Date(),
           })
           .returning();
+
+        // Publish wallet credit message if reward > 0
+        const hunt = await HuntService.getById(huntId);
+        if (reward > 0) {
+          try {
+            await MessagePublisherService.publishWithRetry({
+              userId: userId,
+              huntId: huntId,
+              taskId: taskId,
+              amount: reward,
+              rank: rank,
+              claimId: task.claim_id || undefined,
+              timestamp: new Date(),
+              taskName: task.name,
+              huntName: hunt?.name || '',
+            });
+          } catch (error) {
+            console.error('Failed to publish wallet credit message:', error);
+            // Don't fail the task completion if message publishing fails
+            // The message can be retried later or handled manually
+          }
+        }
 
         return completedTask;
       });

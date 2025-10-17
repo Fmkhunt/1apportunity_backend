@@ -10,6 +10,7 @@ import { setupRoutes } from './routes';
 import { authConfig } from './config/auth';
 import { AppError } from './utils/AppError';
 import { ResponseHandler } from './utils/responseHandler';
+import { RabbitMQConnection } from './config/rabbitmq';
 
 // Global variables
 declare global {
@@ -161,6 +162,14 @@ class App {
     try {
       // Connect to database
       await connectDatabase();
+
+      // Connect to RabbitMQ
+      try {
+        await RabbitMQConnection.connect();
+      } catch (error) {
+        console.warn('Failed to connect to RabbitMQ:', error);
+        console.warn('Continuing without RabbitMQ...');
+      }
 
       // Start server
       const PORT = process.env.PORT || 3000;

@@ -10,6 +10,8 @@ import { setupRoutes } from './routes';
 import { authConfig } from './config/auth';
 import { AppError } from './utils/AppError';
 import { ResponseHandler } from './utils/responseHandler';
+import { RabbitMQConnection } from './config/rabbitmq';
+import { MessageConsumerService } from './services/messageConsumer.service';
 
 // Global variables
 declare global {
@@ -149,6 +151,15 @@ class App {
       // Connect to database
       console.log(process.env.MONGODB_URI);
       await connectDatabase();
+
+      // Connect to RabbitMQ and start consumer
+      try {
+        await RabbitMQConnection.connect();
+        await MessageConsumerService.startConsuming();
+      } catch (error) {
+        console.warn('Failed to connect to RabbitMQ or start consumer:', error);
+        console.warn('Continuing without RabbitMQ...');
+      }
 
       // Start server
       const PORT = process.env.PORT || 3000;

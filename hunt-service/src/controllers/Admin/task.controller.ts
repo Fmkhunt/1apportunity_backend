@@ -89,15 +89,17 @@ export class TaskController {
   static async getById(req: TAuthenticatedAdminRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { taskId } = req.params;
-
+      //get task with taskId and clues and questions
       const task = await TaskService.getById(taskId);
+      // const clues = await ClueService.getCluesByTaskId(taskId);
+      // const questions = await QuestionService.getByTaskId(taskId);
 
       if (!task) {
         ResponseHandler.notFound(res, "Task not found");
         return;
       }
 
-      ResponseHandler.success(res, task, "Task retrieved successfully");
+      ResponseHandler.success(res, { task }, "Task retrieved successfully");
     } catch (error) {
       next(error);
     }

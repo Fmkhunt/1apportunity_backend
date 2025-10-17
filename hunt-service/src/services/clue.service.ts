@@ -229,4 +229,13 @@ export class ClueService {
     }
   }
 
+  static async getCluesByTaskId(taskId: string): Promise<TClue[]> {
+    const clues = await db.query.clueTasksTable.findMany({
+      where: eq(clueTasksTable.task_id, taskId),
+      with: {
+        clue: true,
+      },
+    });
+    return clues.map(clue => clue.clue) as TClue[];
+  }
 }

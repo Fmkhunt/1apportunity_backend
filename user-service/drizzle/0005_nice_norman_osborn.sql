@@ -1,0 +1,1 @@
+ALTER TABLE "service_location" DROP COLUMN IF EXISTS "currency_short";

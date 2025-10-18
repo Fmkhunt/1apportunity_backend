@@ -131,7 +131,8 @@ export class ZoneService {
    */
   static async getZoneById(id: string): Promise<TZone> {
     try {
-      const result = await db
+      // also add service location details in object
+      const [result] = await db
         .select({
           ...getTableColumns(ZoneTable),
           coordinates_arr: sql<any>`
@@ -140,19 +141,22 @@ export class ZoneService {
               ST_AsGeoJSON(${ZoneTable.area})::jsonb
               ELSE NULL 
             END
-          `
+          `,
+          service_location: ServiceLocationTable
         })
         .from(ZoneTable)
+        .leftJoin(ServiceLocationTable, eq(ZoneTable.service_location_id, ServiceLocationTable.id))
         .where(eq(ZoneTable.id, id))
         .limit(1);
 
-      const zone = result[0];
+      const zone = result;
       if (!zone) {
         throw new AppError('Zone not found', 404);
       }
       
       return zone as TZone;
     } catch (error) {
+      console.error(error);
       if (error instanceof AppError) {
         throw error;
       }

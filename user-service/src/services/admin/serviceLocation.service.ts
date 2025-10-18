@@ -98,7 +98,6 @@ export class ServiceLocationService {
             like(ServiceLocationTable.timezone, `%${search}%`),
             like(ServiceLocationTable.currency, `%${search}%`),
             like(ServiceLocationTable.currency_sign, `%${search}%`),
-            like(ServiceLocationTable.currency_short, `%${search}%`),
             like(ServiceLocationTable.map, `%${search}%`),
             like(ServiceLocationTable.payment_gateway, `%${search}%`)
           )

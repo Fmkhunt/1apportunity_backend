@@ -4,7 +4,6 @@ export type TServiceLocation = {
   timezone: string;
   currency: string;
   currency_sign: string;
-  currency_short: string;
   map: string;
   payment_gateway: string;
   created_at: Date;
@@ -16,7 +15,6 @@ export type TServiceLocationCreate = {
   timezone: string;
   currency: string;
   currency_sign: string;
-  currency_short: string;
   map: string;
   payment_gateway: string;
 }
@@ -26,7 +24,6 @@ export type TServiceLocationUpdate = {
   timezone?: string;
   currency?: string;
   currency_sign?: string;
-  currency_short?: string;
   map?: string;
   payment_gateway?: string;
 }

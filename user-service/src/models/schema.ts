@@ -44,7 +44,6 @@ export const ServiceLocationTable = pgTable('service_location', {
   timezone: varchar('timezone', { length: 50 }).notNull(),
   currency: varchar('currency', { length: 50 }).notNull(),
   currency_sign: varchar('currency_sign', { length: 10 }).notNull(),
-  currency_short: varchar('currency_short', { length: 10 }).notNull(),
   map: varchar('map', { length: 50 }).notNull(), // google, apple, etc.
   payment_gateway: varchar('payment_gateway', { length: 50 }).notNull(), // stripe, paypal, etc.
   created_at: timestamp('created_at').defaultNow(),

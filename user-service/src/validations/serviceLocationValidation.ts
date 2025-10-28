@@ -4,9 +4,8 @@ export const serviceLocationValidation = {
   create: Joi.object({
     country: Joi.string().max(100).required(),
     timezone: Joi.string().max(50).required(),
-    currency: Joi.string().max(50).required(),
+    currency: Joi.string().max(50),
     currency_sign: Joi.string().max(10).required(),
-    currency_short: Joi.string().max(10).required(),
     map: Joi.string().max(50).required(),
     payment_gateway: Joi.string().max(50).required(),
   }),
@@ -16,7 +15,6 @@ export const serviceLocationValidation = {
     timezone: Joi.string().max(50),
     currency: Joi.string().max(50),
     currency_sign: Joi.string().max(10),
-    currency_short: Joi.string().max(10),
     map: Joi.string().max(50),
     payment_gateway: Joi.string().max(50),
   }),

@@ -5,6 +5,7 @@ export interface RabbitMQConfig {
   exchange: string;
   queues: {
     walletCredit: string;
+    tokenDebit: string;
   };
 }
 
@@ -13,6 +14,7 @@ export const rabbitMQConfig: RabbitMQConfig = {
   exchange: 'task_completion_exchange',
   queues: {
     walletCredit: 'wallet_credit_queue',
+    tokenDebit: 'wallet_token_debit_queue',
   },
 };
 
@@ -47,16 +49,24 @@ export class RabbitMQConnection {
           durable: true,
         });
 
-        // Assert queue
+        // Assert queues
         await this.channel.assertQueue(rabbitMQConfig.queues.walletCredit, {
           durable: true,
         });
+        await this.channel.assertQueue(rabbitMQConfig.queues.tokenDebit, {
+          durable: true,
+        });
 
-        // Bind queue to exchange
+        // Bind queues to exchange
         await this.channel.bindQueue(
           rabbitMQConfig.queues.walletCredit,
           rabbitMQConfig.exchange,
           'wallet.credit'
+        );
+        await this.channel.bindQueue(
+          rabbitMQConfig.queues.tokenDebit,
+          rabbitMQConfig.exchange,
+          'wallet.token.debit'
         );
 
         // Set prefetch to process one message at a time

@@ -1,0 +1,1 @@
+ALTER TABLE "service_location" ALTER COLUMN "currency" DROP NOT NULL;

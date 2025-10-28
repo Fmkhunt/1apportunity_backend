@@ -15,6 +15,13 @@
       "when": 1758867769602,
       "tag": "0001_yellow_madelyne_pryor",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1761648340622,
+      "tag": "0002_sour_steel_serpent",
+      "breakpoints": true
     }
   ]
 }

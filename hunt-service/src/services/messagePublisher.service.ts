@@ -13,6 +13,14 @@ export interface WalletCreditMessage {
   huntName: string;
 }
 
+export interface WalletTokenDebitMessage {
+  userId: string;
+  clueId: string;
+  token: number;
+  description?: string;
+  timestamp: Date;
+}
+
 export class MessagePublisherService {
   /**
    * Publish wallet credit message
@@ -82,5 +90,36 @@ export class MessagePublisherService {
       `Failed to publish message after ${maxRetries} attempts: ${lastError?.message}`,
       500
     );
+  }
+  
+  /**
+   * Publish token debit for clue purchase
+   */
+  static async publishWalletTokenDebit(message: WalletTokenDebitMessage): Promise<void> {
+    try {
+      const channel = await RabbitMQConnection.connect();
+      const messageBuffer = Buffer.from(JSON.stringify(message));
+      const published = channel.publish(
+        rabbitMQConfig.exchange,
+        'wallet.token.debit',
+        messageBuffer,
+        {
+          persistent: true,
+          timestamp: Date.now(),
+          messageId: `${message.userId}-${message.clueId}-${Date.now()}`,
+        }
+      );
+      if (!published) {
+        throw new AppError('Failed to publish token debit message to RabbitMQ', 500);
+      }
+      console.log('Wallet token debit message published:', {
+        userId: message.userId,
+        clueId: message.clueId,
+        token: message.token,
+      });
+    } catch (error) {
+      console.error('Error publishing wallet token debit message:', error);
+      throw new AppError('Failed to publish wallet token debit message', 500);
+    }
   }
 }

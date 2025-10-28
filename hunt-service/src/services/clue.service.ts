@@ -2,6 +2,7 @@ import { db } from '../config/database';
 import { cluesTable, clueTasksTable, tasksTable } from '../models/schema';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { AppError } from '../utils/AppError';
+import { MessagePublisherService } from './messagePublisher.service';
 import type { TClue, TCreateClueData, TUpdateClueData, TClueQueryParams } from '../types';
 
 export class ClueService {
@@ -238,4 +239,29 @@ export class ClueService {
     });
     return clues.map(clue => clue.clue) as TClue[];
   }
+  static async buyClue(clue_id: string, userId: string): Promise<any> {
+    const clue = await db.query.cluesTable.findFirst({
+      where: eq(cluesTable.id, clue_id),
+    });
+    if (!clue) {
+      throw new AppError('Clue not found', 404);
+    }
+
+    // Publish token debit for wallet service
+    try {
+      await MessagePublisherService.publishWalletTokenDebit({
+        userId,
+        clueId: clue.id,
+        token: clue.token,
+        description: `Clue purchase: ${clue.title}`,
+        timestamp: new Date(),
+      });
+    } catch (e) {
+      // Do not block the clue response if publish fails; surface error to logs
+      console.error('Failed to publish wallet token debit:', e);
+    }
+
+    return clue;
+  }
+
 }

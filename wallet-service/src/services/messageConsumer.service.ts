@@ -1,5 +1,8 @@
 import { RabbitMQConnection, rabbitMQConfig } from '../config/rabbitmq';
 import { WalletService } from './wallet.service';
+import { db } from '../config/database';
+import { TokenWalletTable } from '../models/schema';
+import { AppError } from '../utils/AppError';
 import { AppError } from '../utils/AppError';
 
 export interface WalletCreditMessage {
@@ -11,6 +14,14 @@ export interface WalletCreditMessage {
   amount: number;
   rank: number;
   claimId?: string;
+  timestamp: Date;
+}
+
+export interface WalletTokenDebitMessage {
+  userId: string;
+  clueId: string;
+  token: number;
+  description?: string;
   timestamp: Date;
 }
 
@@ -30,7 +41,7 @@ export class MessageConsumerService {
       const channel = await RabbitMQConnection.connect();
       this.isConsuming = true;
 
-      console.log('Starting wallet credit message consumer...');
+      console.log('Starting wallet message consumer...');
 
       await channel.consume(
         rabbitMQConfig.queues.walletCredit,
@@ -72,7 +83,43 @@ export class MessageConsumerService {
         }
       );
 
-      console.log('Wallet credit message consumer started successfully');
+      // Consume token debit for clue purchases
+      await channel.consume(
+        rabbitMQConfig.queues.tokenDebit,
+        async (message) => {
+          if (!message) return;
+          try {
+            const content = message.content.toString();
+            const debitMessage: WalletTokenDebitMessage = JSON.parse(content);
+
+            console.log('Processing wallet token debit message:', {
+              userId: debitMessage.userId,
+              clueId: debitMessage.clueId,
+              token: debitMessage.token,
+            });
+
+            // Insert debit into token_wallet table
+            await db.insert(TokenWalletTable).values({
+              userId: debitMessage.userId,
+              token: debitMessage.token,
+              transaction_type: 'debit',
+              clue_id: debitMessage.clueId,
+              description: debitMessage.description || 'Clue purchase',
+              created_at: new Date(),
+              updated_at: new Date(),
+            });
+
+            channel.ack(message);
+            console.log('Wallet token debit message processed successfully');
+          } catch (error) {
+            console.error('Error processing wallet token debit message:', error);
+            channel.nack(message, false, true);
+          }
+        },
+        { noAck: false }
+      );
+
+      console.log('Wallet message consumer started successfully');
 
     } catch (error) {
       this.isConsuming = false;

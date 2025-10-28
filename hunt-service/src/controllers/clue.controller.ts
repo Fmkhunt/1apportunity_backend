@@ -41,5 +41,23 @@ export class ClueController {
       next(error);
     }
   }
+  /**
+   * Get clue by id
+   */
+  static async buyClue(req: TAuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+        const userId = req.user?.userId as string;
+        const clue = await ClueService.buyClue(req.params.clueId, userId);
+        
+        if (!clue) {
+            ResponseHandler.notFound(res, "Clue not found");
+            return;
+        }
+        
+        ResponseHandler.success(res, clue, "Clue purchased successfully");
+    } catch (error) {
+      next(error);
+    }
+  }
 
 }

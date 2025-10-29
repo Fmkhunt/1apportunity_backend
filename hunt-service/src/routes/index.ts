@@ -2,6 +2,7 @@ import { Application } from 'express';
 import adminRoutes from './admin';
 import huntRoutes from './hunts.routes';
 import taskRoutes from './task.routes';
+import clueRoutes from './clue.routes';
 
 export const setupRoutes = (app: Application): void => {
   // Health check endpoint
@@ -18,6 +19,7 @@ export const setupRoutes = (app: Application): void => {
   app.use('/api/admin', adminRoutes);
   app.use('/api/hunt', huntRoutes);
   app.use('/api/task', taskRoutes);
+  app.use('/api/clue', clueRoutes);
 
   // Root endpoint
   app.get('/', (req, res) => {

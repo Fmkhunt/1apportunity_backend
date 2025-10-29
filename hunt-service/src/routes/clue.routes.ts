@@ -8,7 +8,7 @@ const router = Router();
 // Create a new hunt
 router.get('/:taskId/list', authenticateJWT, ClueController.getClueList);
 router.get('/:taskId/clue/:clueId', authenticateJWT, ClueController.getClueById);
-router.get('/buyClue/:clueId', authenticateJWT, ClueController.buyClue);
+router.get('/buy/:clueId', authenticateJWT, ClueController.buyClue);
 
 
 export default router;

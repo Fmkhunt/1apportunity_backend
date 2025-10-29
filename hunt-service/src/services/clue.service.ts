@@ -1,5 +1,5 @@
 import { db } from '../config/database';
-import { cluesTable, clueTasksTable, tasksTable } from '../models/schema';
+import { cluesTable, clueTasksTable, tasksTable, UsersTable } from '../models/schema';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { AppError } from '../utils/AppError';
 import { MessagePublisherService } from './messagePublisher.service';
@@ -74,6 +74,7 @@ export class ClueService {
         task_ids: clueTasks.map(ct => ct.task_id),
       };
     } catch (error) {
+      console.error('Failed to fetch clue:', error);
       if (error instanceof AppError) throw error;
       throw new AppError('Failed to fetch clue', 500);
     }
@@ -207,7 +208,7 @@ export class ClueService {
     }
   }
   
-  static async getListForUser(taskId: string): Promise<{ data: TClue[] }> {
+  static async getListForUser(taskId: string): Promise<TClue[]> {
     try {
         const clues = await db.query.clueTasksTable.findMany({
             where: eq(clueTasksTable.task_id, taskId),
@@ -218,13 +219,12 @@ export class ClueService {
                     title: true,
                     token: true,
                     created_at: true,
+                    // description: true,
                   },
                 },
             },
         });
-        return {
-          data: clues.map(clue => clue.clue) as TClue[],
-        };
+        return clues.map(clue => clue.clue) as TClue[];
     } catch (error) {
       throw new AppError('Failed to list clues', 500);
     }
@@ -249,6 +249,15 @@ export class ClueService {
 
     // Publish token debit for wallet service
     try {
+      const user = await db.query.UsersTable.findFirst({
+        where: eq(UsersTable.id, userId),
+      });
+      if (!user) {
+        throw new AppError('User not found', 404);
+      }
+      if (user.token < clue.token) {
+        throw new AppError('Insufficient tokens', 400);
+      }
       await MessagePublisherService.publishWalletTokenDebit({
         userId,
         clueId: clue.id,
@@ -256,6 +265,13 @@ export class ClueService {
         description: `Clue purchase: ${clue.title}`,
         timestamp: new Date(),
       });
+      await db.update(UsersTable).set({
+        token: user.token - clue.token,
+      }).where(eq(UsersTable.id, userId));
+      return {
+        ...clue,
+        user_token: user.token - clue.token,
+      };
     } catch (e) {
       // Do not block the clue response if publish fails; surface error to logs
       console.error('Failed to publish wallet token debit:', e);

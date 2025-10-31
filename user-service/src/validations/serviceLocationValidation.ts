@@ -9,7 +9,7 @@ export const serviceLocationValidation = {
     map: Joi.string().max(50).required(),
     payment_gateway: Joi.string().max(50).required(),
   }),
-
+  //update service location
   update: Joi.object({
     country: Joi.string().max(100),
     timezone: Joi.string().max(50),

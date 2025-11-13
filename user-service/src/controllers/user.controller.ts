@@ -3,6 +3,8 @@ import { UserService } from '../services/user.service';
 import { ResponseHandler } from '../utils/responseHandler';
 import { TAuthenticatedRequest } from '../types';
 import { AppError } from '../utils/AppError';
+import { ZoneService } from '@/services/admin/zone.service';
+import { ServiceLocationService } from '@/services/admin/serviceLocation.service';
 
 export class UserController {
 
@@ -19,6 +21,18 @@ export class UserController {
     //   }
 
       ResponseHandler.success(res, req.user, 'Profile retrieved successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+  static async getProfileDetails(req: TAuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const latitude = parseFloat(req.query.latitude as string);
+      const longitude = parseFloat(req.query.longitude as string);
+      const user = req.user;
+      const zone = await ZoneService.getZoneByCoordinates(latitude, longitude);
+      const service_location = await ServiceLocationService.getServiceLocationById(zone?.service_location_id);
+      ResponseHandler.success(res, {user, zone, service_location}, 'Profile retrieved successfully');
     } catch (error) {
       next(error);
     }

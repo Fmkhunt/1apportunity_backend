@@ -34,6 +34,7 @@ export class HuntClaimService {
 
       return newHuntClaim;
     } catch (error) {
+      console.error("Error in huntClaimService.createHuntClaim=>", error);
       throw new AppError(error.message, 500);
     }
   }
@@ -52,7 +53,7 @@ export class HuntClaimService {
 
       return result[0];
     } catch (error) {
-      console.log(error)
+      console.error("Error in huntClaimService.getCurrrentClaimByUserId=>", error);
       throw new AppError(error.message, 500);
     }
   }
@@ -73,7 +74,7 @@ export class HuntClaimService {
 
       return result[0];
     } catch (error) {
-      console.log(error)
+      console.error("Error in huntClaimService.updateStatus=>", error); 
       throw new AppError(error.message, 500);
     }
   }
@@ -89,7 +90,7 @@ export class HuntClaimService {
         ).limit(1);
       return result[0];
     } catch (error) {
-      console.log(error)
+      console.error("Error in huntClaimService.getById=>", error);
       throw new AppError(error.message, 500);
     }
   }
@@ -108,7 +109,7 @@ export class HuntClaimService {
 
       return result[0];
     } catch (error) {
-      console.log(error)
+      console.error("Error in huntClaimService.findMyHuntClaim=>", error);
       throw new AppError(error.message, 500);
     }
   }
@@ -130,7 +131,7 @@ export class HuntClaimService {
 
       return result[0];
     } catch (error) {
-      console.log(error)
+      console.error("Error in huntClaimService.completeHuntClaim=>", error);
       throw new AppError(error.message, 500);
     }
   }
@@ -160,7 +161,7 @@ export class HuntClaimService {
         const totalPages = Math.ceil((totalRecords[0]?.count ?? 0) / limit);
       return { hunts: hunts as unknown as THuntWithClaim[], totalRecords: Number(totalRecords[0]?.count) ?? 0, page, limit, totalPages };
     } catch (error) {
-      console.error(error);
+      console.error("Error in huntClaimService.getHuntHistory=>", error);
       throw new AppError(error.message, 500);
     }
   }

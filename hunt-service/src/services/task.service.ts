@@ -356,8 +356,8 @@ export class TaskService {
       throw new AppError(error.message, 500);
     }
   }
-    /**
-   * Complete task
+  /**
+   * Get task list for users
    */
     static async getTaskListForUsers(userId: string, huntId: string): Promise<any> {
       try {
@@ -445,6 +445,8 @@ export class TaskService {
           if (!isCorrect) {
             throw new AppError('Incorrect answers provided', 400);
           }
+        }else if (task.type === 'mission') {
+          
         }
         // Get claim data if task has claim_id
         let claimData = null;

@@ -7,6 +7,7 @@ import { trpc, trpcUser } from '../trpc/client';
 import { ResponseHandler } from '../utils/responseHandler';
 import {  TgetHuntUserQueryParams, TAuthenticatedRequest } from '../types';
 import { QuestionService } from '../services/question.service';
+import { HuntRequestHistoryService } from '@/services/huntRequestHistory.service';
 
 export class HuntController {
 
@@ -33,6 +34,12 @@ export class HuntController {
         ResponseHandler.notFound(res, "We are not available in this area");
         return;
       }
+      const lastDailyRequestHistory = await HuntRequestHistoryService.getLastDailyRequestHistory(req.user?.userId);
+      if (lastDailyRequestHistory.length > 3) {
+        ResponseHandler.error(res, "You have reached the maximum number of requests for today");
+        return;
+      }
+      await HuntRequestHistoryService.create(req.user?.userId);
       result = await HuntService.getNewNearByHunt(req.user?.userId, queryParams, zone.id);
       if (!result) {
         ResponseHandler.notFound(res, "Hunt not found");

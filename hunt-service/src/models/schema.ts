@@ -146,6 +146,20 @@ export const huntTasksTable = pgTable('hunt_tasks', {
   unq: unique().on(table.hunt_id, table.task_id),
 }));
 
+export const huntRequestHistoryTable = pgTable('hunt_request_history', {
+  id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  user_id: uuid('user_id').notNull().references(() => UsersTable.id, { onDelete: 'cascade' }),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+});
+
+export const huntRequestHistoryRelations = relations(huntRequestHistoryTable, ({ one }) => ({
+  user: one(UsersTable, {
+    fields: [huntRequestHistoryTable.user_id],
+    references: [UsersTable.id],
+  }),
+}));
+
 export const huntsRelations = relations(huntsTable, ({ many }) => ({
   huntTasks: many(huntTasksTable),
   huntClaims: many(huntClaimTable),

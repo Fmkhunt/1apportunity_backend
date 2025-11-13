@@ -92,14 +92,14 @@ export class TaskController {
       //get task with taskId and clues and questions
       const task = await TaskService.getById(taskId);
       // const clues = await ClueService.getCluesByTaskId(taskId);
-      // const questions = await QuestionService.getByTaskId(taskId);
-
+      const questions = await QuestionService.getByTaskId(taskId);
+      
       if (!task) {
         ResponseHandler.notFound(res, "Task not found");
         return;
       }
 
-      ResponseHandler.success(res, { task }, "Task retrieved successfully");
+      ResponseHandler.success(res, { task, questions }, "Task retrieved successfully");
     } catch (error) {
       next(error);
     }

@@ -268,4 +268,16 @@ export class ZoneService {
     const firstPoint = `${coords[0].longitude} ${coords[0].latitude}`;
     return `POLYGON((${points}, ${firstPoint}))`;
   }
+  
+  static async getZoneByCoordinates(latitude: number, longitude: number): Promise<TZone | null> {
+    try {
+      const zone = await db.query.ZoneTable.findFirst({
+        where: sql`ST_Within(ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326), ST_SetSRID(${ZoneTable.area}, 4326))`,
+      });
+      return zone as TZone | null;
+    } catch (error) {
+      console.error(error);
+      throw new AppError('Failed to get zone by coordinates', 500);
+    }
+  }
 }

@@ -169,5 +169,5 @@ export class QuestionService {
     } catch (error: any) {
       throw new AppError(error.message, 500);
     }
-}
+  }
 }

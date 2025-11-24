@@ -1,6 +1,6 @@
 import { db } from '../config/database';
 import { tasksTable, clueTasksTable, huntTasksTable, completeTaskTable, UsersTable } from '../models/schema';
-import { eq, and, or, like, desc, asc, sql } from 'drizzle-orm';
+import { eq, and, or, like, desc, asc, sql, ilike } from 'drizzle-orm';
 import { AppError } from '../utils/AppError';
 import {
   TTask,
@@ -85,8 +85,8 @@ export class TaskService {
       if (search) {
         whereConditions.push(
           or(
-            like(tasksTable.name, `%${search}%`),
-            like(tasksTable.description, `%${search}%`)
+            ilike(tasksTable.name, `%${search}%`),
+            ilike(tasksTable.description, `%${search}%`)
           )
         );
       }

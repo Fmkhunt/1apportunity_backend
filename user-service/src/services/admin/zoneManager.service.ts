@@ -3,7 +3,7 @@ import { AdminModel } from '../../models/Admin';
 import { AdminTable } from '../../models/schema';
 import { TAdmin, TAdminCreate, TAdminUpdate } from '../../types/admin';
 import { AppError } from '../../utils/AppError';
-import { and, eq, like, ne, sql } from 'drizzle-orm';
+import { and, eq, like, ne, sql, ilike } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 export class ZoneManagerService {
 
@@ -35,7 +35,7 @@ export class ZoneManagerService {
     if (search) {
       whereClause = and(
         eq(AdminTable.role, 'zone_manager'),
-        like(AdminTable.email, `%${search}%`)
+        ilike(AdminTable.email, `%${search}%`)
       );
     } else {
       whereClause = eq(AdminTable.role, 'zone_manager');

@@ -1,6 +1,6 @@
 import { db } from '../config/database';
 import { huntsTable, huntClaimTable, huntTasksTable, tasksTable } from '../models/schema';
-import { eq, and, or, like, desc, asc, sql, getTableColumns,isNull, ne, notExists, lte, gte } from 'drizzle-orm';
+import { eq, and, or, like, desc, asc, sql, getTableColumns,isNull, ne, notExists, lte, gte, ilike } from 'drizzle-orm';
 import { AppError } from '../utils/AppError';
 import {
   THunt,
@@ -185,8 +185,8 @@ export class HuntService {
       if (search) {
         whereConditions.push(
           or(
-            like(huntsTable.name, `%${search}%`),
-            like(huntsTable.description, `%${search}%`)
+            ilike(huntsTable.name, `%${search}%`),
+            ilike(huntsTable.description, `%${search}%`)
           )
         );
       }

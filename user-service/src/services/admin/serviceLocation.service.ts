@@ -1,6 +1,6 @@
 import { db } from '../../config/database';
 import { ServiceLocationTable } from '../../models/schema';
-import { eq, and, or, like, desc, asc, sql, getTableColumns } from 'drizzle-orm';
+import { eq, and, or, like, desc, asc, sql, getTableColumns, ilike } from 'drizzle-orm';
 import { TServiceLocation, TServiceLocationCreate, TServiceLocationUpdate } from '../../types/serviceLocation';
 import { AppError } from '../../utils/AppError';
 
@@ -94,12 +94,12 @@ export class ServiceLocationService {
       if (search) {
         whereConditions.push(
           or(
-            like(ServiceLocationTable.country, `%${search}%`),
-            like(ServiceLocationTable.timezone, `%${search}%`),
+            ilike(ServiceLocationTable.country, `%${search}%`),
+            ilike(ServiceLocationTable.timezone, `%${search}%`),
             // like(ServiceLocationTable.currency, `%${search}%`),
             // like(ServiceLocationTable.currency_sign, `%${search}%`),
-            like(ServiceLocationTable.map, `%${search}%`),
-            like(ServiceLocationTable.payment_gateway, `%${search}%`)
+            ilike(ServiceLocationTable.map, `%${search}%`),
+            ilike(ServiceLocationTable.payment_gateway, `%${search}%`)
           )
         );
       }

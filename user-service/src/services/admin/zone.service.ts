@@ -1,6 +1,6 @@
 import { db } from '../../config/database';
 import { ZoneTable, ServiceLocationTable } from '../../models/schema';
-import { eq, and, or, like, desc, asc, sql, getTableColumns } from 'drizzle-orm';
+import { eq, and, or, like, desc, asc, sql, getTableColumns, ilike } from 'drizzle-orm';
 import { TZone, TZoneCreate, TZoneUpdate } from '../../types/zone';
 import { AppError } from '../../utils/AppError';
 import wellknown from 'wellknown';
@@ -77,8 +77,8 @@ export class ZoneService {
       if (search) {
         whereConditions.push(
           or(
-            like(ZoneTable.name, `%${search}%`),
-            like(ZoneTable.description, `%${search}%`)
+            ilike(ZoneTable.name, `%${search}%`),
+            ilike(ZoneTable.description, `%${search}%`)
           )
         );
       }

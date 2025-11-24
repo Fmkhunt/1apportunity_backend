@@ -13,6 +13,19 @@ import { trpc } from '../trpc/client';
 import { numeric } from 'drizzle-orm/pg-core';
 
 export class HuntClaimService {
+  static async getTotalHuntDone(userId: string): Promise<number> {
+    try {
+      const totalHuntDone = await db.select({ count: sql<number>`count(*)` })
+        .from(huntClaimTable)
+        .where(eq(huntClaimTable.user_id, userId));
+      return Number(totalHuntDone[0]?.count) ?? 0;
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(error.message, 500);
+    }
+  }
   /**
    * Create a new hunt
    */

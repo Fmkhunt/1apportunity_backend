@@ -1,5 +1,5 @@
 import { db } from '../config/database';
-import { tasksTable, clueTasksTable, huntTasksTable, completeTaskTable } from '../models/schema';
+import { tasksTable, clueTasksTable, huntTasksTable, completeTaskTable, UsersTable } from '../models/schema';
 import { eq, and, or, like, desc, asc, sql } from 'drizzle-orm';
 import { AppError } from '../utils/AppError';
 import {
@@ -527,17 +527,44 @@ export class TaskService {
             // Don't fail the task completion if message publishing fails
             // The message can be retried later or handled manually
           }
+          await tx.update(UsersTable)
+          .set({
+            balance: sql<number>`${UsersTable.balance} + ${reward}`,
+            updated_at: new Date(),
+          })
+          .where(eq(UsersTable.id, userId))
         }
-
         return completedTask;
       });
     } catch (error) {
-      console.error(error);
-      if (error instanceof AppError) {
-        throw error;
-      }
-      throw new AppError(error.message, error.statusCode || 500);
+      throw new AppError(error.message, 500);
     }
   }
   
+  static async getTotalTaskDone(userId: string): Promise<number> {
+    try {
+      const totalTaskDone = await db.select({ count: sql<number>`count(*)` })
+        .from(completeTaskTable)
+        .where(eq(completeTaskTable.user_id, userId));
+      return totalTaskDone[0].count;
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(error.message, 500);
+    }
+  }
+  static async getLifetimeEarnings(userId: string): Promise<number> {
+    try {
+      const lifetimeEarnings = await db.select({ sum: sql<number>`sum(reward)` })
+        .from(completeTaskTable)
+        .where(eq(completeTaskTable.user_id, userId));
+      return Number(lifetimeEarnings[0]?.sum) ?? 0;
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(error.message, 500);
+    }
+  }
 }

@@ -19,7 +19,7 @@ export class UserController {
     //   if (!user) {
     //     throw new AppError('User not found', 404);
     //   }
-
+      
       ResponseHandler.success(res, req.user, 'Profile retrieved successfully');
     } catch (error) {
       next(error);

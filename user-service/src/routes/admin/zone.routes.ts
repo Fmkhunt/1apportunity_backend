@@ -31,12 +31,12 @@ router.get('/service-location/:serviceLocationId',
 
 router.put('/:id', 
   authenticateAdminToken, 
-  validateRequest(zoneValidation.update), 
+  validateRequest(zoneValidation.update),
   ZoneController.updateZone
 );
 
 router.delete('/:id', 
-  authenticateAdminToken, 
+  authenticateAdminToken,
   ZoneController.deleteZone
 );
 

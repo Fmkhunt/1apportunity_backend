@@ -3,7 +3,7 @@ import { WalletService } from './wallet.service';
 import { db } from '../config/database';
 import { TokenWalletTable } from '../models/schema';
 import { AppError } from '../utils/AppError';
-import { AppError } from '../utils/AppError';
+// import { AppError } from '../utils/AppError';
 
 export interface WalletCreditMessage {
   userId: string;
@@ -142,7 +142,7 @@ export class MessageConsumerService {
         reference_id: message.taskId,
         created_by: 'system',
       });
-
+      
       console.log(`Successfully credited ${message.amount} coins to user ${message.userId} for task completion`);
 
     } catch (error) {

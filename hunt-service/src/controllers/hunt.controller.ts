@@ -196,5 +196,16 @@ export class HuntController {
       next(error);
     }
   }
-
+  
+  static async getProfileData(req: TAuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const user = req.user;
+      let totalTaskDone= await TaskService.getTotalTaskDone(user.userId);
+      let totalHuntDone= await HuntClaimService.getTotalHuntDone(user.userId);
+      let lifetimeEarnings= await TaskService.getLifetimeEarnings(user.userId);
+      ResponseHandler.success(res, {totalTaskDone, totalHuntDone, lifetimeEarnings}, 'Profile retrieved successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
 }

@@ -240,12 +240,6 @@ export type TUpdateHuntData = {
   coordinates?: string | { latitude: number; longitude: number };
   duration?: string;
   task_ids?: string[];
-  questions?: {
-    question: string;
-    answer: string;
-    question_type?: 'text' | 'mcq';
-    options?: { option: string; text: string }[];
-  }[];
 }
 
 export type THuntQueryParams = {

@@ -7,7 +7,7 @@ import { trpc, trpcUser } from '../trpc/client';
 import { ResponseHandler } from '../utils/responseHandler';
 import {  TgetHuntUserQueryParams, TAuthenticatedRequest } from '../types';
 import { QuestionService } from '../services/question.service';
-import { HuntRequestHistoryService } from '@/services/huntRequestHistory.service';
+import { HuntRequestHistoryService } from '../services/huntRequestHistory.service';
 
 export class HuntController {
 
@@ -196,7 +196,7 @@ export class HuntController {
       next(error);
     }
   }
-  
+
   static async getProfileData(req: TAuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const user = req.user;

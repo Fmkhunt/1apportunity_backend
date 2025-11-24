@@ -35,6 +35,21 @@ export const taskValidation = {
     status: Joi.string().valid('active', 'inactive').optional(),
     clue_ids: Joi.array().items(Joi.string().uuid()).optional(),
     claim_id: Joi.string().uuid().optional(),
+    questions: Joi.array().when('type', {
+      is: 'question',
+      then: Joi.array().items(Joi.object({
+        question: Joi.string().required(),
+        answer: Joi.string().required(),
+        question_type: Joi.string().valid('text', 'mcq').default('text'),
+        options: Joi.array().when('question_type', {
+          is: 'mcq',
+          then: Joi.array().items(Joi.object({
+            option: Joi.string().required(),
+            text: Joi.string().required(),
+          }).required()),
+        }),
+      })),
+    })
   }),
 
   query: Joi.object({

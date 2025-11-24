@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { HuntService } from '../../services/hunt.service';
 import { ResponseHandler } from '../../utils/responseHandler';
 import { TCreateHuntData, TUpdateHuntData, THuntQueryParams, TAuthenticatedAdminRequest, TCreateQuestionData } from '../../types';
-import { QuestionService } from '@/services/question.service';
+import { QuestionService } from '../../services/question.service';
 
 export class HuntController {
   /**
@@ -73,18 +73,6 @@ export class HuntController {
       const updateData: TUpdateHuntData = req.body;
 
       const result = await HuntService.update(huntId, updateData);
-      if (updateData.questions) {
-        const questionsToUpdate: TCreateQuestionData[] = updateData.questions.map(q => ({
-          question: q.question,
-          task_id: huntId,
-          answer: q.answer,
-          question_type: q.question_type || 'text',
-          options: q.options,
-          created_by: req.admin?.adminId as string,
-        }));
-        await QuestionService.deleteByTaskId(huntId);
-        await QuestionService.createMultiple(questionsToUpdate);
-      }
       ResponseHandler.success(res, result, "Hunt updated successfully");
     } catch (error) {
       next(error);

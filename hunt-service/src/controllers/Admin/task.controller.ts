@@ -111,12 +111,27 @@ export class TaskController {
   static async update(req: TAuthenticatedAdminRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { taskId } = req.params;
+      const { questions, ...restBody } = req.body;
+
       const updateData: TUpdateTaskData = {
-        ...req.body,
+        ...restBody,
         updated_by: req.admin?.adminId as string,
       };
 
       const result = await TaskService.update(taskId, updateData);
+
+      if (questions) {
+        const questionsToUpdate: TCreateQuestionData[] = questions.map(q => ({
+          question: q.question,
+          task_id: taskId,
+          answer: q.answer,
+          question_type: q.question_type || 'text',
+          options: q.options,
+          created_by: req.admin?.adminId as string,
+        }));
+        await QuestionService.deleteByTaskId(taskId);
+        await QuestionService.createMultiple(questionsToUpdate);
+      }
 
       ResponseHandler.success(res, result, "Task updated successfully");
     } catch (error) {

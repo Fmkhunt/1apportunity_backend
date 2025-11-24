@@ -12,6 +12,7 @@ export const claimValidation = {
         rewards: Joi.number().integer().min(1).required(),
       })
     ).optional(),
+    description: Joi.string().min(1).max(255).optional(),
     coupen_code: Joi.string().max(100).optional(),
     product_img: Joi.string().max(255).optional(),
   }),
@@ -20,6 +21,7 @@ export const claimValidation = {
     name: Joi.string().min(1).max(255).optional(),
     reward: Joi.number().integer().min(1).optional(),
     claim_type: Joi.string().min(1).max(255).optional(),
+    description: Joi.string().min(1).max(255).optional(),
     levels: Joi.array().items(
       Joi.object({
         level: Joi.number().integer().min(1).required(),

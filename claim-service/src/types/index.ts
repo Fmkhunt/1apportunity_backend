@@ -200,6 +200,7 @@ export type THuntQueryParams = {
 export type TClaim = {
   id: string;
   reward: number;
+  description: string;
   claim_type: string;
   levels?: Array<{
     level: number;
@@ -215,6 +216,7 @@ export type TClaim = {
 export type TCreateClaimData = {
   name: string;
   reward: number;
+  description: string;
   claim_type: string;
   levels?: Array<{
     level: number;
@@ -228,6 +230,7 @@ export type TCreateClaimData = {
 export type TUpdateClaimData = {
   name?: string;
   reward?: number;
+  description?: string;
   claim_type?: string;
   levels?: Array<{
     level: number;

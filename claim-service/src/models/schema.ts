@@ -20,6 +20,7 @@ export const claimsTable = pgTable('claims', {
   id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: varchar('name', { length: 255 }).notNull(),
   reward: integer('reward').notNull(),
+  description: text('description'),
   claim_type: varchar('claim_type', { length: 255 }).notNull(),
   levels: jsonb('levels').$type<Array<{ level: number; user_count: number; rewards: number }> | null>(),
   coupen_code: varchar('coupen_code', { length: 100 }),

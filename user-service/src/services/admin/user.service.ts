@@ -1,6 +1,6 @@
 import { UsersTable, otpTable } from '../../models/schema';
 import { db } from '../../config/database';
-import { eq, and, isNotNull, lt, gt, desc } from 'drizzle-orm';
+import { eq, and, isNotNull, lt, gt, desc, sql } from 'drizzle-orm';
 import {
   TUsers,
 } from '../../types';
@@ -17,11 +17,17 @@ export class AdminUserService {
       orderBy: [desc(UsersTable.created_at)],
       where: isNotNull(UsersTable.id),
     });
+    const [{count}] = await db.select({
+      count: sql<number>`count(*)`,
+    }).from(UsersTable);
+    const totalPages = Math.ceil(count / limit);
+
     return {
       users,
-      total: users.length,
+      totalRecords: count,
       page,
       limit,
+      totalPages,
     };
   }
 }

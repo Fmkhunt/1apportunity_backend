@@ -1,0 +1,1 @@
+ALTER TABLE "otp" ADD COLUMN "ccode" varchar(5) NOT NULL;

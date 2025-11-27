@@ -42,10 +42,12 @@ export type TApiResponse<T = any> = {
 export type TLoginData = {
   phone: string;
   otp: number;
+  ccode: string;
 }
 
 export type TSendOtpData = {
   phone: string;
+  ccode: string;
   type: 'register' | 'login';
 }
 
@@ -57,6 +59,8 @@ export type TRegistrationData = {
   name: string;
   referral_by?: string;
   device_token?: string;
+  ccode: string;
+  country: string;
 }
 
 // Token response types

@@ -1,0 +1,1 @@
+ALTER TABLE "complete_task" ALTER COLUMN "rank" DROP NOT NULL;

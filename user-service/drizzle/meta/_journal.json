@@ -50,6 +50,20 @@
       "when": 1761654077641,
       "tag": "0006_silky_shriek",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1764240319086,
+      "tag": "0007_glamorous_quasimodo",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1764240567308,
+      "tag": "0008_legal_wasp",
+      "breakpoints": true
     }
   ]
 }

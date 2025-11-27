@@ -8,6 +8,7 @@ import { ResponseHandler } from '../utils/responseHandler';
 import {  TgetHuntUserQueryParams, TAuthenticatedRequest } from '../types';
 import { QuestionService } from '../services/question.service';
 import { HuntRequestHistoryService } from '../services/huntRequestHistory.service';
+import { ConfigService } from '../services/config.service';
 
 export class HuntController {
 
@@ -35,7 +36,8 @@ export class HuntController {
         return;
       }
       const lastDailyRequestHistory = await HuntRequestHistoryService.getLastDailyRequestHistory(req.user?.userId);
-      if (lastDailyRequestHistory.length > 3) {
+      const maxScans = await ConfigService.getConfigByKey('max_scans');
+      if (lastDailyRequestHistory.length > parseInt(maxScans.value as string)) {
         ResponseHandler.error(res, "You have reached the maximum number of requests for today");
         return;
       }
@@ -50,6 +52,19 @@ export class HuntController {
       next(error);
     }
   }
+
+  static async availableScans(req: TAuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const usedScans = await HuntRequestHistoryService.getLastDailyRequestHistory(req.user?.userId);
+      const maxScans = await ConfigService.getConfigByKey('max_scans');
+
+      ResponseHandler.success(res, parseInt(maxScans.value as string) - usedScans.length, "Available scans retrieved successfully");
+      return;
+    } catch (error) {
+      next(error);
+    }
+  }
+
   /**
    * Claim a hunt for the current user
    * - Checks if an entry already exists in hunt_claim for the same user and hunt
@@ -167,9 +182,12 @@ export class HuntController {
       }
       
       if (task.type == 'question') {
-        const checkAns=await QuestionService.verifyAnswer(task_id, answers)
-        if(!checkAns){
-          ResponseHandler.error(res, "answers are incorrect");
+        const answerResult = await QuestionService.verifyAnswer(task_id, answers);
+        if(!answerResult.isAllCorrect){
+          ResponseHandler.error(
+            res, 
+            `Answers are incorrect. Correct: ${answerResult.correctCount}, Wrong: ${answerResult.wrongCount} out of ${answerResult.totalQuestions}`
+          );
           return;
         }
       }

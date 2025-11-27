@@ -142,9 +142,16 @@ export class QuestionService {
     }
   }
   /**
-   * Delete all questions for a task
+   * Verify answers and return counts of correct and wrong answers
    */
-  static async verifyAnswer(taskId: string, answers: { question_id: string, answer: string }[]): Promise<boolean> {
+  static async verifyAnswer(taskId: string, answers: { question_id: string, answer: string }[]): Promise<{
+    correctCount: number;
+    wrongCount: number;
+    isAllCorrect: boolean;
+    totalQuestions: number;
+    percentage: number;
+    isPass: boolean;
+  }> {
     try {
       // fetch questions from db
       const questions = await db
@@ -159,13 +166,29 @@ export class QuestionService {
         questions.map(q => [q.id, q.answer])
       );
 
-      // verify all answers
-      const isAllCorrect = answers.every(ans => {
+      // verify answers and count correct/wrong
+      let correctCount = 0;
+      let wrongCount = 0;
+
+      answers.forEach(ans => {
         const correctAnswer = questionMap.get(ans.question_id);
-        return correctAnswer !== undefined && correctAnswer === ans.answer;
+        if (correctAnswer !== undefined && correctAnswer === ans.answer) {
+          correctCount++;
+        } else {
+          wrongCount++;
+        }
       });
 
-      return isAllCorrect;
+      const isAllCorrect = wrongCount === 0 && correctCount === questions.length;
+
+      return {
+        correctCount,
+        wrongCount,
+        isAllCorrect,
+        totalQuestions: questions.length,
+        percentage: (correctCount / questions.length) * 100,
+        isPass: (correctCount / questions.length) * 100 >= 49.9 ? true : false,
+      };
     } catch (error: any) {
       throw new AppError(error.message, 500);
     }

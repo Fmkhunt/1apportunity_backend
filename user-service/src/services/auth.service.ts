@@ -50,14 +50,14 @@ export class AuthService {
 
   static async register(userData: TRegistrationData): Promise<any> {
     try {
-      const { email, phone, otp, name, referral_by, device_token } = userData;
-      const otpData = await db.query.otpTable.findFirst({where:and(eq(otpTable.phone, phone), gt(otpTable.expires_at, new Date()))});
+      const { email, phone, otp, name, referral_by, device_token, ccode, country } = userData;
+      const otpData = await db.query.otpTable.findFirst({where:and(eq(otpTable.phone, phone), eq(otpTable.ccode, ccode), gt(otpTable.expires_at, new Date()))});
       if (!otpData || otpData.otp !== otp) {
         throw new AppError('Invalid OTP', 500);
       }
-      await db.delete(otpTable).where(eq(otpTable.phone, phone));
+      await db.delete(otpTable).where(and(eq(otpTable.phone, phone), eq(otpTable.ccode, ccode)));
 
-      const user = await db.query.UsersTable.findFirst({where:eq(UsersTable.phone, phone)});
+      const user = await db.query.UsersTable.findFirst({where:and(eq(UsersTable.phone, phone), eq(UsersTable.ccode, ccode))});
       if (user) {
         throw new AppError('User already exists', 500);
       }
@@ -77,6 +77,8 @@ export class AuthService {
         name,
         referral_by,
         referral_code,
+        ccode,
+        country,
         status: 'active',
         token: 0,
       })
@@ -87,7 +89,7 @@ export class AuthService {
           coin: Number(process.env.REFERRAL_COIN) || 0,
         });
       }
-      await db.delete(otpTable).where(eq(otpTable.phone, phone));
+      await db.delete(otpTable).where(and(eq(otpTable.phone, phone), eq(otpTable.ccode, ccode)));
       return {user: newUser, token: this.generateTokens(newUser.id)};
     } catch (error) {
       console.error(error);
@@ -101,8 +103,8 @@ export class AuthService {
 
   static async login(userData: TLoginData): Promise<any> {
     try {
-      const { phone, otp } = userData;
-      const otpData = await db.query.otpTable.findFirst({where:and(eq(otpTable.phone, phone), eq(otpTable.otp, otp),isNotNull(otpTable.user_id), gt(otpTable.expires_at, new Date()))});
+      const { phone, otp, ccode } = userData;
+      const otpData = await db.query.otpTable.findFirst({where:and(eq(otpTable.phone, phone), eq(otpTable.ccode, ccode), eq(otpTable.otp, otp),isNotNull(otpTable.user_id), gt(otpTable.expires_at, new Date()))});
       if (!otpData) {
         throw new AppError('Invalid OTP', 500);
       }
@@ -110,7 +112,7 @@ export class AuthService {
       if (!user) {
         throw new AppError('User not found', 404);
       }
-      await db.delete(otpTable).where(eq(otpTable.phone, phone));
+      await db.delete(otpTable).where(and(eq(otpTable.phone, phone), eq(otpTable.ccode, ccode)));
       return {user: user, token: this.generateTokens(user.id)};
     } catch (error) {
       console.error(error);
@@ -130,9 +132,9 @@ export class AuthService {
     }
   }
 
-  static async sendOtp(phone: string, type: 'register' | 'login'): Promise<any> {
+  static async sendOtp(phone: string, ccode: string, type: 'register' | 'login'): Promise<any> {
     try {
-      const user = await db.query.UsersTable.findFirst({where:eq(UsersTable.phone, phone)});
+      const user = await db.query.UsersTable.findFirst({where:and(eq(UsersTable.phone, phone), eq(UsersTable.ccode, ccode))});
       if (type === 'register') {
         if (user) {
           throw new AppError('User already exists', 400);
@@ -142,7 +144,7 @@ export class AuthService {
           throw new AppError('User not found', 404);
         }
       }
-      await db.delete(otpTable).where(eq(otpTable.phone, phone));
+      await db.delete(otpTable).where(and(eq(otpTable.phone, phone), eq(otpTable.ccode, ccode)));
       // const code: number = Math.floor(100000 + Math.random() * 900000);
       const code: number=1234;
 
@@ -150,6 +152,7 @@ export class AuthService {
         phone: phone,
         user_id: user?.id || null,
         otp: code,
+        ccode: ccode,
         expires_at: new Date(Date.now() + 1000 * 60 * 5),
       });
 
@@ -173,7 +176,6 @@ export class AuthService {
     try {
 
       // Generate new tokens
-      console.log("user",user);
 
       const tokens = this.generateTokens(user.id);
 

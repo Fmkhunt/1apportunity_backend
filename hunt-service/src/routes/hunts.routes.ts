@@ -12,5 +12,6 @@ router.post('/completeHunt', authenticateJWT,validateRequest(huntValidation.comp
 router.get('/completeHuntHistory', authenticateJWT,validateQuery(huntValidation.pagination), HuntController.completeHuntHistory);
 router.post('/claim', authenticateJWT, validateRequest(huntValidation.claimHunt), HuntController.claimHunt);
 router.get('/profileData', authenticateJWT, HuntController.getProfileData);
+router.get('/availableScans', authenticateJWT, HuntController.availableScans);
 
 export default router;

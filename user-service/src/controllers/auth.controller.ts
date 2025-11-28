@@ -27,7 +27,7 @@ export class AuthController {
     try {
       const reqData: TSendOtpData = req.body;
 
-      const result = await AuthService.sendOtp(reqData.phone, reqData.type);
+      const result = await AuthService.sendOtp(reqData.phone, reqData.ccode, reqData.type);
 
       ResponseHandler.success(res, result.data, result.message);
     } catch (error) {

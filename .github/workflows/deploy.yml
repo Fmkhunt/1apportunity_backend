@@ -37,10 +37,6 @@ jobs:
             git pull origin main
           fi
           
-          # Stop PM2 processes
-          pm2 stop all || true
-          pm2 delete all || true
-          
           # Install dependencies and build each service
           echo "Installing dependencies and building services..."
           
@@ -65,8 +61,11 @@ jobs:
           cd ..
           
           # Start services with PM2
-          echo "Starting services with PM2..."
-          pm2 start ecosystem.config.js
+          # echo "Starting services with PM2..."
+          # pm2 start ecosystem.config.js
+          
+          echo "Restarting services with PM2..."
+          pm2 restart all
           
           # Save PM2 configuration
           pm2 save

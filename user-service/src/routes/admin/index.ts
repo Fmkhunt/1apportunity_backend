@@ -22,4 +22,8 @@ router.use('/service-locations', serviceLocationRoutes);
 // Zone routes
 router.use('/zones', zoneRoutes);
 
+// Referral routes
+import referralRoutes from './referral.routes';
+router.use('/referrals', referralRoutes);
+
 export default router;

@@ -100,7 +100,6 @@ export class AuthService {
   /**
    * Login user
    */
-
   static async login(userData: TLoginData): Promise<any> {
     try {
       const { phone, otp, ccode } = userData;

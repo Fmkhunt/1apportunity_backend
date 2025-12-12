@@ -394,6 +394,7 @@ export class TaskService {
 
     return huntClaim;
     } catch (error) {
+      console.error('Error fetching task list for users:', error);
       if (error instanceof AppError) {
         throw error;
       }

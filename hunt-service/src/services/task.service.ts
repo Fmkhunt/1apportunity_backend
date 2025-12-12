@@ -390,7 +390,7 @@ export class TaskService {
         )
       )
       .where(eq(huntTasksTable.hunt_id, huntId))
-      .groupBy(tasksTable.id);
+      .groupBy(huntTasksTable.task_id);
 
     return huntClaim;
     } catch (error) {

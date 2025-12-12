@@ -380,7 +380,7 @@ export class TaskService {
       })
       .from(huntTasksTable)
       .innerJoin(tasksTable, eq(huntTasksTable.task_id, tasksTable.id))
-      .innerJoin(questionsTable, eq(tasksTable.id, questionsTable.task_id))
+      .innerJoin(questionsTable, eq(huntTasksTable.task_id, questionsTable.task_id))
       .leftJoin(
         completeTaskTable,
         and(

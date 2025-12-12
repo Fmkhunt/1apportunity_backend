@@ -1,5 +1,5 @@
 import { db } from '../config/database';
-import { tasksTable, clueTasksTable, huntTasksTable, completeTaskTable, UsersTable } from '../models/schema';
+import { tasksTable, clueTasksTable, huntTasksTable, completeTaskTable, UsersTable, questionsTable } from '../models/schema';
 import { eq, and, or, like, desc, asc, sql, ilike, not, isNull, isNotNull } from 'drizzle-orm';
 import { AppError } from '../utils/AppError';
 import {
@@ -370,6 +370,7 @@ export class TaskService {
         reward: tasksTable.reward,
         type: tasksTable.type,
         status: tasksTable.status,
+        questionsCount: sql<number>`count(${questionsTable.id})`,
         taskStatus: sql<string>`
           CASE 
             WHEN ${completeTaskTable.id} IS NOT NULL THEN 'completed'
@@ -379,6 +380,7 @@ export class TaskService {
       })
       .from(huntTasksTable)
       .innerJoin(tasksTable, eq(huntTasksTable.task_id, tasksTable.id))
+      .innerJoin(questionsTable, eq(tasksTable.id, questionsTable.task_id))
       .leftJoin(
         completeTaskTable,
         and(
@@ -387,7 +389,8 @@ export class TaskService {
           eq(completeTaskTable.user_id, userId)
         )
       )
-      .where(eq(huntTasksTable.hunt_id, huntId));
+      .where(eq(huntTasksTable.hunt_id, huntId))
+      .groupBy(tasksTable.id);
 
     return huntClaim;
     } catch (error) {

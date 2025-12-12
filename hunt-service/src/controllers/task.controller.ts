@@ -79,7 +79,7 @@ export class TaskController {
       if(!answerResult.isPass) {
         const result = await TaskService.completeFailedTask(userId, hunt_id, task);
         result.answerResult = answerResult;
-        ResponseHandler.error(res, "Task failed due to incorrect answers", 400, result);
+        ResponseHandler.success(res, result, "Task failed due to incorrect answers");
         return;
       }
       const completedTask = await TaskService.completeTask(userId, hunt_id, task);

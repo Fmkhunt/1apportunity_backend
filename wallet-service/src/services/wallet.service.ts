@@ -20,6 +20,13 @@ export interface CreditWalletData {
 }
 
 export class WalletService {
+  static async getLifetimeEarnings(userId: string): Promise<number> {
+    const lifetimeEarnings = await db.select({ sum: sql<number>`sum(coins)`.as('sum') })
+      .from(walletTable)
+      .where(and(eq(walletTable.userId, userId), eq(walletTable.transaction_type, 'credit'), eq(walletTable.type, 'task')))
+    return Number(lifetimeEarnings[0]?.sum) ?? 0;
+  }
+
   static async getList(userId: string, page: number, limit: number): Promise<TWallet[]> {
     const offset = (page - 1) * limit;
     const wallet = await db.select().from(walletTable).where(eq(walletTable.userId, userId)).orderBy(desc(walletTable.created_at)).offset(offset).limit(limit);

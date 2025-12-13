@@ -25,5 +25,13 @@ export class WalletController {
     }
   }
 
-
+  static async getLifetimeEarnings(req: TAuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { userId } = req.user;
+      const lifetimeEarnings = await WalletService.getLifetimeEarnings(userId);
+      ResponseHandler.success(res, lifetimeEarnings, "Lifetime earnings retrieved successfully");
+    } catch (error) {
+      next(error);
+    }
+  }
 }

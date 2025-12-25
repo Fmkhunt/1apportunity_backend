@@ -146,7 +146,7 @@ export class PaymentController {
       }
 
       // Get raw body (should be available from middleware)
-      const rawBody = (req as any).rawBody as Buffer;
+      const rawBody = req.body;
       if (!rawBody) {
         throw new AppError('Raw body not available', 400);
       }

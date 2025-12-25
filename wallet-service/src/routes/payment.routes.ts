@@ -19,6 +19,11 @@ router.post(
 router.post(
   '/webhook/stripe',
   express.raw({ type: 'application/json' }),
+  (req: Request, res: Response, next: NextFunction) => {
+    // Store raw body for signature verification
+    (req as any).rawBody = req.body;
+    next();
+  },
   PaymentController.handleStripeWebhook
 );
 

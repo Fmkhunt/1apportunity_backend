@@ -7,7 +7,7 @@ import { paymentValidation } from '../validations/payment.validation';
 
 const router = Router();
 
-// Create payment session (authenticated)
+// Create payment session (authenticated) test
 router.post(
   '/create-session',
   authenticateJWT,

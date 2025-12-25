@@ -1,0 +1,1 @@
+ALTER TABLE "complete_task" ADD COLUMN "asset_urls" jsonb;

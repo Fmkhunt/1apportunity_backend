@@ -92,6 +92,20 @@
       "when": 1764240224255,
       "tag": "0012_married_swordsman",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "5",
+      "when": 1766576469249,
+      "tag": "0013_grey_norrin_radd",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "5",
+      "when": 1766577062643,
+      "tag": "0014_daily_the_liberteens",
+      "breakpoints": true
     }
   ]
 }

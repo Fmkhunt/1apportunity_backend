@@ -1,3 +1,4 @@
+import { TCompleteTaskStatus } from '@/types';
 import Joi from 'joi';
 
 export const taskValidation = {
@@ -66,5 +67,28 @@ export const taskValidation = {
       question_id: Joi.string().uuid().required(),
       answer: Joi.string().required(),
     })).optional(),
+  }),
+
+  completeMissionTask: Joi.object({
+    hunt_id: Joi.string().uuid().required(),
+    task_id: Joi.string().uuid().required(),
+    asset_urls: Joi.array().items(Joi.string().uri().required()),
+  }),
+
+  completedTasksHistory: Joi.object({
+    hunt_id: Joi.string().uuid().optional(),
+    task_id: Joi.string().uuid().optional(),
+    status: Joi.string().valid('pending', 'completed', 'rejected', 'failed').optional(),
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(10),
+  }),
+
+  updateCompletedTaskStatus: Joi.object({
+    completed_task_id: Joi.string().uuid().required(),
+    status: Joi.string().valid('pending', 'completed', 'rejected', 'failed').required(),
+  }),
+  completeQRCodeMissionTask: Joi.object({
+    hunt_id: Joi.string().uuid().required(),
+    task_id: Joi.string().uuid().required(),
   }),
 };

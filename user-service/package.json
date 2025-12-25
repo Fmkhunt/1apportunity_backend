@@ -14,7 +14,6 @@
     "db:migrate": "drizzle-kit migrate:pg",
     "db:studio": "drizzle-kit studio",
     "admin:setup": "ts-node src/scripts/createAdminTable.ts",
-
     "docker:compose": "docker-compose up --build",
     "docker:build": "docker build -t tresurehunt-userservice .",
     "docker:run": "docker run -p 3000:3000 tresurehunt-userservice",
@@ -42,6 +41,7 @@
     "@/validations": "dist/validations"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.957.0",
     "@paralleldrive/cuid2": "^2.2.2",
     "@trpc/server": "^11.5.1",
     "bcryptjs": "^2.4.3",

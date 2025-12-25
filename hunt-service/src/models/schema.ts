@@ -121,6 +121,8 @@ export const completeTaskTable = pgTable('complete_task', {
   claim_id: uuid('claim_id').references(() => claimsTable.id),
   rank: integer('rank'),
   reward: integer('reward').notNull(),
+  status: varchar('status', { enum: ['pending', 'completed', 'rejected', 'failed'] }).default('completed'),
+  asset_urls: jsonb('asset_urls').$type<string[]>(),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
 }, (table) => ({

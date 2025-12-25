@@ -8,6 +8,8 @@ import {
   TUpdateTaskData,
   TTaskQueryParams,
   TQuestion,
+  TCompleteTaskStatus,
+  TCompleteTask,
 } from '../types';
 import { QuestionService } from './question.service';
 import { HuntClaimService } from './huntClaim.service';
@@ -337,17 +339,17 @@ export class TaskService {
   static async getTaskDetails(taskId: string): Promise<TTask & { questions?: TQuestion[] }> {
     try {
       const task = await this.getById(taskId);
-      
+
       if (!task) {
         throw new AppError('Task not found', 404);
       }
-      
+
       // If task type is 'question', fetch associated questions
       if (task.type === 'question') {
         const questions = await QuestionService.getByTaskId(taskId);
         return { ...task, questions };
       }
-      
+
       return task;
     } catch (error) {
       if (error instanceof AppError) {
@@ -372,7 +374,7 @@ export class TaskService {
         status: tasksTable.status,
         questionsCount: sql<number>`count(${questionsTable.id})`,
         taskStatus: sql<string>`
-          CASE 
+          CASE
             WHEN ${completeTaskTable.id} IS NOT NULL THEN 'completed'
             ELSE 'pending'
           END
@@ -380,7 +382,7 @@ export class TaskService {
       })
       .from(huntTasksTable)
       .innerJoin(tasksTable, eq(huntTasksTable.task_id, tasksTable.id))
-      .innerJoin(questionsTable, eq(huntTasksTable.task_id, questionsTable.task_id))
+      .leftJoin(questionsTable, eq(huntTasksTable.task_id, questionsTable.task_id))
       .leftJoin(
         completeTaskTable,
         and(
@@ -428,13 +430,13 @@ export class TaskService {
    * Complete a task for a user
    */
   static async completeTask(
-    userId: string, 
-    huntId: string, 
+    userId: string,
+    huntId: string,
     task: TTask,
   ): Promise<any> {
     try {
       return await db.transaction(async (tx) => {
-        
+
         let claimData = null;
         if (task.claim_id) {
           try {
@@ -525,14 +527,10 @@ export class TaskService {
       throw new AppError(error.message, 500);
     }
   }
-  static async completeFailedTask(
-    userId: string, 
-    huntId: string, 
-    task: TTask,
-  ): Promise<any> {
+
+  static async completeMissionTask(userId: string, huntId: string, task: TTask, asset_urls: string[]  ): Promise<any> {
     try {
       return await db.transaction(async (tx) => {
-        
         // Insert the completed task
         const [completedTask] = await tx
           .insert(completeTaskTable)
@@ -543,6 +541,38 @@ export class TaskService {
             claim_id: task.claim_id,
             rank: null,
             reward: 0,
+            status: 'pending',
+            asset_urls: asset_urls,
+            created_at: new Date(),
+            updated_at: new Date(),
+          })
+          .returning();
+        return completedTask;
+      });
+    } catch (error) {
+      throw new AppError(error.message, 500);
+    }
+  }
+
+  static async completeFailedTask(
+    userId: string,
+    huntId: string,
+    task: TTask,
+  ): Promise<any> {
+    try {
+      return await db.transaction(async (tx) => {
+
+        // Insert the completed task
+        const [completedTask] = await tx
+          .insert(completeTaskTable)
+          .values({
+            hunt_id: huntId,
+            task_id: task.id,
+            user_id: userId,
+            claim_id: task.claim_id,
+            rank: null,
+            reward: 0,
+            status: 'failed',
             created_at: new Date(),
             updated_at: new Date(),
           })
@@ -554,6 +584,7 @@ export class TaskService {
       throw new AppError(error.message, 500);
     }
   }
+
   static async getTotalTaskDone(userId: string): Promise<number> {
     try {
       const totalTaskDone = await db.select({ count: sql<number>`count(*)` })
@@ -567,6 +598,7 @@ export class TaskService {
       throw new AppError(error.message, 500);
     }
   }
+
   static async getLifetimeEarnings(userId: string): Promise<number> {
     try {
       const lifetimeEarnings = await db.select({ sum: sql<number>`sum(reward)` })
@@ -577,6 +609,226 @@ export class TaskService {
       if (error instanceof AppError) {
         throw error;
       }
+      throw new AppError(error.message, 500);
+    }
+  }
+
+  static async getCompletedTasksHistory(huntId: string | null, taskId: string | null, status: TCompleteTaskStatus | null, page: number, limit: number): Promise<any> {
+    try {
+      const offset = (page - 1) * limit;
+      const whereConditions = [];
+      if (huntId) {
+        whereConditions.push(eq(completeTaskTable.hunt_id, huntId));
+      }
+      if(taskId) {
+        whereConditions.push(eq(completeTaskTable.task_id, taskId));
+      }
+      if(status) {
+        whereConditions.push(eq(completeTaskTable.status, status));
+      }
+      const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
+      const completedTasks = await db.select().from(completeTaskTable).where(whereClause).orderBy(desc(completeTaskTable.created_at)).limit(limit).offset(offset);
+      const totalRecords = await db.select({ count: sql<number>`count(*)` }).from(completeTaskTable).where(and(...whereConditions));
+      const totalPages = Math.ceil(Number(totalRecords[0]?.count) / limit);
+      return {
+        list: completedTasks as unknown as TCompleteTask[],
+        totalRecords: Number(totalRecords[0]?.count),
+        page: page,
+        limit: limit,
+        totalPages: totalPages,
+      };
+    } catch (error) {
+      throw new AppError(error.message, 500);
+    }
+  }
+
+  static async updateCompletedTaskStatus(completedTaskId: string, status: TCompleteTaskStatus): Promise<any> {
+    try {
+      return await db.transaction(async (tx) => {
+        const existingTask = await db.query.completeTaskTable.findFirst({
+          where: eq(completeTaskTable.id, completedTaskId),
+        });
+        if (!existingTask || existingTask.status !== 'pending') {
+          throw new AppError('Completed task not found', 404);
+        }
+        if(status === 'rejected') {
+          const [updatedTask] = await tx.update(completeTaskTable)
+          .set({ status: status, updated_at: new Date(), rank: null, reward: 0 })
+          .where(eq(completeTaskTable.id, completedTaskId)).returning();
+          return updatedTask as unknown as TCompleteTask;
+        }
+        const task = await tx.query.tasksTable.findFirst({
+          where: eq(tasksTable.id, existingTask.task_id),
+        });
+        if (!task) {
+          throw new AppError('Task not found', 404);
+        }
+
+        const completedCount = await tx
+        .select({ count: sql<number>`count(*)` })
+        .from(completeTaskTable)
+        .where(
+          and(
+            eq(completeTaskTable.hunt_id, existingTask.hunt_id),
+            eq(completeTaskTable.task_id, existingTask.task_id),
+            isNotNull(completeTaskTable.rank)
+          )
+        );
+        const rank = Number(completedCount[0].count) + 1;
+
+        // Calculate reward based on claim levels and rank
+        let claimData = null;
+        try {
+          // Import trpc client dynamically to avoid circular dependency
+          claimData = await (trpc as any).claim.getById.query(existingTask.claim_id);
+
+        } catch (error) {
+          console.error('Error fetching claim data:', error);
+          throw new AppError('Error fetching claim data', 500);
+          // Continue without claim data if not available
+        }
+
+        let reward = 0;
+        if (claimData && claimData.levels && Array.isArray(claimData.levels)) {
+          // Find the appropriate level based on rank
+          // Sort levels by level number to ensure correct order
+          const sortedLevels = claimData.levels.sort((a, b) => a.level - b.level);
+          // Calculate cumulative user counts for each level
+          let cumulativeCount = 0;
+          for (const level of sortedLevels) {
+            cumulativeCount += level.user_count;
+            if (rank <= cumulativeCount) {
+              reward = level.rewards;
+              break;
+            }
+          }
+        }
+        const hunt = await HuntService.getById(existingTask.hunt_id);
+        if (reward > 0 && status === 'completed') {
+          try {
+            await MessagePublisherService.publishWithRetry({
+              userId: existingTask.user_id,
+              huntId: existingTask.hunt_id,
+              taskId: existingTask.task_id,
+              amount: reward,
+              rank: rank,
+              claimId: existingTask.claim_id || undefined,
+              timestamp: new Date(),
+              taskName: task.name,
+              huntName: hunt?.name || '',
+            });
+          } catch (error) {
+            console.error('Failed to publish wallet credit message:', error);
+            // Don't fail the task completion if message publishing fails
+            // The message can be retried later or handled manually
+          }
+          await tx.update(UsersTable)
+          .set({
+            balance: sql<number>`${UsersTable.balance} + ${reward}`,
+            updated_at: new Date(),
+          })
+          .where(eq(UsersTable.id, existingTask.user_id))
+        }
+
+        const [updatedTask] = await tx.update(completeTaskTable)
+        .set({ status: status, updated_at: new Date(), reward: reward, rank: rank })
+        .where(eq(completeTaskTable.id, completedTaskId)).returning();
+        return updatedTask as unknown as TCompleteTask;
+      });
+    } catch (error) {
+      throw new AppError(error.message, 500);
+    }
+  }
+
+  static async completeQRCodeMissionTask(userId: string, huntId: string, task: TTask): Promise<any> {
+    try {
+      return await db.transaction(async (tx) => {
+        // Insert the completed task
+
+        const completedCount = await tx
+        .select({ count: sql<number>`count(*)` })
+        .from(completeTaskTable)
+        .where(
+          and(
+            eq(completeTaskTable.hunt_id, huntId),
+            eq(completeTaskTable.task_id, task.id),
+            isNotNull(completeTaskTable.rank)
+          )
+        );
+        const rank = Number(completedCount[0].count) + 1;
+
+        // Calculate reward based on claim levels and rank
+        let claimData = null;
+        try {
+          // Import trpc client dynamically to avoid circular dependency
+          claimData = await (trpc as any).claim.getById.query(task.claim_id);
+
+        } catch (error) {
+          console.error('Error fetching claim data:', error);
+          throw new AppError('Error fetching claim data', 500);
+          // Continue without claim data if not available
+        }
+
+        let reward = 0;
+        if (claimData && claimData.levels && Array.isArray(claimData.levels)) {
+          // Find the appropriate level based on rank
+          // Sort levels by level number to ensure correct order
+          const sortedLevels = claimData.levels.sort((a, b) => a.level - b.level);
+          // Calculate cumulative user counts for each level
+          let cumulativeCount = 0;
+          for (const level of sortedLevels) {
+            cumulativeCount += level.user_count;
+            if (rank <= cumulativeCount) {
+              reward = level.rewards;
+              break;
+            }
+          }
+        }
+        const hunt = await HuntService.getById(huntId);
+        if (reward > 0) {
+          try {
+            await MessagePublisherService.publishWithRetry({
+              userId: userId,
+              huntId: huntId,
+              taskId: task.id,
+              amount: reward,
+              rank: rank,
+              claimId: task.claim_id || undefined,
+              timestamp: new Date(),
+              taskName: task.name,
+              huntName: hunt?.name || '',
+            });
+          } catch (error) {
+            console.error('Failed to publish wallet credit message:', error);
+            // Don't fail the task completion if message publishing fails
+            // The message can be retried later or handled manually
+          }
+          await tx.update(UsersTable)
+          .set({
+            balance: sql<number>`${UsersTable.balance} + ${reward}`,
+            updated_at: new Date(),
+          })
+          .where(eq(UsersTable.id, userId))
+        }
+
+        const [completedTask] = await tx
+          .insert(completeTaskTable)
+          .values({
+            hunt_id: huntId,
+            task_id: task.id,
+            user_id: userId,
+            claim_id: task.claim_id,
+            rank: rank,
+            reward: reward,
+            status: 'completed',
+            asset_urls: [],
+            created_at: new Date(),
+            updated_at: new Date(),
+          })
+          .returning();
+        return completedTask;
+      });
+    } catch (error) {
       throw new AppError(error.message, 500);
     }
   }

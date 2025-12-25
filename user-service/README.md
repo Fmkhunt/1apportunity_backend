@@ -14,6 +14,7 @@ A modern, secure, and scalable Node.js API built with TypeScript, featuring enha
 - **Testing**: Jest configuration for unit and integration tests
 - **Linting**: ESLint with TypeScript rules
 - **Compression**: Response compression for better performance
+- **File Storage**: AWS S3 uploads (form-data) with per-type folders
 
 ## 📋 Prerequisites
 
@@ -128,6 +129,12 @@ src/
 | POST | `/logout` | Logout user | Yes |
 | GET | `/user/:userId` | Get user by ID | Yes |
 
+### Storage Routes (`/api/storage`)
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/upload` | Upload any file via form-data (`file`, `type`) | Yes |
+| DELETE | `/` | Delete a file by `key` (body) | Yes |
+
 ### Health Check
 - `GET /health` - Server health status
 
@@ -195,6 +202,12 @@ npm run test:coverage
 | `JWT_REFRESH_SECRET` | JWT refresh secret | Required |
 | `JWT_EXPIRES_IN` | Access token expiry | `15m` |
 | `JWT_REFRESH_EXPIRES_IN` | Refresh token expiry | `7d` |
+| `AWS_REGION` | AWS region for S3 bucket | Required |
+| `AWS_ACCESS_KEY_ID` | AWS IAM access key | Required |
+| `AWS_SECRET_ACCESS_KEY` | AWS IAM secret key | Required |
+| `AWS_S3_BUCKET` | S3 bucket name | Required |
+| `AWS_S3_BASE_URL` | Optional custom/base URL for file access | Bucket URL |
+| `AWS_S3_MAX_FILE_SIZE_MB` | Max form-data upload size in MB | `25` |
 
 ## 🚀 Deployment
 

@@ -301,3 +301,27 @@ export type THuntRequestHistory = {
   created_at?: Date;
   updated_at?: Date;
 }
+export type TCompleteTaskStatus = 'pending' | 'completed' | 'rejected' | 'failed';
+
+export type TCompleteTask = {
+  id: string;
+  hunt_id: string;
+  task_id: string;
+  user_id: string;
+  status: TCompleteTaskStatus;
+  asset_urls: string[];
+  rank: number | null;
+  reward: number;
+  claim_id: string | null;
+  created_by: string;
+  created_at: Date;
+  updated_at: Date;
+}
+export type TCompleteTaskHistory = {
+  id: string;
+  hunt_id: string;
+  task_id: string;
+  user_id: string;
+  status: TCompleteTaskStatus;
+  asset_urls: string[];
+}

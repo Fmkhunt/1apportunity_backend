@@ -35,7 +35,14 @@ export type TApiResponse<T = any> = {
   message: string;
   success: boolean;
 }
-
+export enum TStorageType {
+  profile = 'profile',
+  document = 'document',
+  video = 'video',
+  image = 'image',
+  other = 'other',
+  hunt_assets = 'hunt_assets',
+}
 // Social login types
 
 // Login types

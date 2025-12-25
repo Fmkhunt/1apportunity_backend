@@ -15,6 +15,11 @@ router.get('/', authenticateAdminToken, validateQuery(taskValidation.query), Tas
 // Get active tasks only
 router.get('/active',authenticateAdminToken,TaskController.getActiveTasks);
 
+// Get completed tasks history
+router.get('/completed-tasks-history', authenticateAdminToken, validateQuery(taskValidation.completedTasksHistory), TaskController.getCompletedTasksHistory);
+
+router.patch('/update-completed-task-status', authenticateAdminToken, validateRequest(taskValidation.updateCompletedTaskStatus), TaskController.updateCompletedTaskStatus);
+
 // Get task by ID
 router.get( '/:taskId', authenticateAdminToken, TaskController.getById );
 
@@ -35,5 +40,6 @@ router.delete('/:taskId/clues', authenticateAdminToken, TaskController.removeClu
 
 // Get clues for a specific task
 router.get('/:taskId/clues', authenticateAdminToken, TaskController.getTaskClues);
+
 
 export default router;

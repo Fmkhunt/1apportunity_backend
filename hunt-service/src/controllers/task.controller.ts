@@ -11,20 +11,20 @@ export class TaskController {
     try {
       const taskId = req.params.taskId;
       // const userClaim = await HuntClaimService.getCurrrentClaimByUserId(req.user?.userId);
-      
+
       const result = await TaskService.getTaskDetails(taskId);
       if(!result){
         ResponseHandler.notFound(res, "Task not found");
         return;
       }
-      
+
       ResponseHandler.success(res, result, "Task retrieved successfully");
       return;
     } catch (error) {
       next(error);
     }
   }
-  
+
   static async getTaskList(req: TAuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const huntId = req.params.huntId;
@@ -43,7 +43,7 @@ export class TaskController {
         ResponseHandler.notFound(res, "Task list not found");
         return;
       }
-      
+
       ResponseHandler.success(res, result, "Task retrieved successfully");
       return;
     } catch (error) {
@@ -84,6 +84,61 @@ export class TaskController {
       }
       const completedTask = await TaskService.completeTask(userId, hunt_id, task);
       completedTask.answerResult = answerResult;
+      ResponseHandler.success(res, completedTask, "Task completed successfully");
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async completeMissionTask(req: TAuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { hunt_id, task_id, asset_urls } = req.body;
+      const userId = req.user?.userId;
+      // check its claim or not
+      const huntClaim = await HuntClaimService.findMyHuntClaim(hunt_id, userId);
+      if(!huntClaim) {
+        ResponseHandler.notFound(res, "Hunt claim not found");
+        return;
+      }
+      const task=await TaskService.getById(task_id);
+      if(!task) {
+        ResponseHandler.notFound(res, "Task not found");
+        return;
+      }
+      const isAlreadyCompleted = await TaskService.verifyAlreadyCompleted(userId, hunt_id, task_id);
+      if(isAlreadyCompleted) {
+        ResponseHandler.error(res, "Task already completed");
+        return;
+      }
+
+      const completedTask = await TaskService.completeMissionTask(userId, hunt_id, task, asset_urls);
+      ResponseHandler.success(res, completedTask, "Task completed successfully");
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async completeQRCodeMissionTask(req: TAuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { hunt_id, task_id } = req.body;
+      const userId = req.user?.userId;
+      // check its claim or not
+      const huntClaim = await HuntClaimService.findMyHuntClaim(hunt_id, userId);
+      if(!huntClaim) {
+        ResponseHandler.notFound(res, "Hunt claim not found");
+        return;
+      }
+      const task=await TaskService.getById(task_id);
+      if(!task) {
+        ResponseHandler.notFound(res, "Task not found");
+        return;
+      } 
+      const isAlreadyCompleted = await TaskService.verifyAlreadyCompleted(userId, hunt_id, task_id);
+      if(isAlreadyCompleted) {
+        ResponseHandler.error(res, "Task already completed");
+        return;
+      }
+      const completedTask = await TaskService.completeQRCodeMissionTask(userId, hunt_id, task);
       ResponseHandler.success(res, completedTask, "Task completed successfully");
     } catch (error) {
       next(error);

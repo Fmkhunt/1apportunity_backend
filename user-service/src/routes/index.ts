@@ -2,6 +2,7 @@ import { Application } from 'express';
 import authRoutes from './auth.routes';
 import userRoutes from './user.routes';
 import adminRoutes from './admin';
+import storageRoutes from './storage.routes';
 
 export const setupRoutes = (app: Application): void => {
   // API routes
@@ -9,6 +10,7 @@ export const setupRoutes = (app: Application): void => {
   app.use('/api/auth', authRoutes);
   app.use('/api/user', userRoutes);
   app.use('/api/admin', adminRoutes);
+  app.use('/api/storage', storageRoutes);
 
   // Health check route
   app.get('/health', (req, res) => {

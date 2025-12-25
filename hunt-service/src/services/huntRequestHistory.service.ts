@@ -18,7 +18,7 @@ export class HuntRequestHistoryService {
 
 
   /**
-   * Create a new hunt request history  
+   * Create a new hunt request history
    */
   static async create(userId: string): Promise<THuntRequestHistory> {
     try {
@@ -57,7 +57,4 @@ export class HuntRequestHistoryService {
       throw new AppError(error.message, 500);
     }
   }
-
-
-
 }

@@ -3,7 +3,7 @@ import { TaskService } from '../../services/task.service';
 import { QuestionService } from '../../services/question.service';
 import { ClueService } from '../../services/clue.service';
 import { ResponseHandler } from '../../utils/responseHandler';
-import { TCreateTaskData, TUpdateTaskData, TTaskQueryParams, TAuthenticatedAdminRequest, TCreateQuestionData } from '../../types';
+import { TCreateTaskData, TUpdateTaskData, TTaskQueryParams, TAuthenticatedAdminRequest, TCreateQuestionData, TCompleteTaskStatus } from '../../types';
 
 export class TaskController {
   /**
@@ -93,7 +93,7 @@ export class TaskController {
       const task = await TaskService.getById(taskId);
       // const clues = await ClueService.getCluesByTaskId(taskId);
       // const questions = await QuestionService.getByTaskId(taskId);
-      
+
       if (!task) {
         ResponseHandler.notFound(res, "Task not found");
         return;
@@ -210,7 +210,7 @@ export class TaskController {
 
       // Get current clue associations
       const currentClueIds = existingTask.clue_ids || [];
-      
+
       // Merge with new clue IDs (avoid duplicates)
       const updatedClueIds = [...new Set([...currentClueIds, ...clue_ids])];
 
@@ -296,4 +296,27 @@ export class TaskController {
       next(error);
     }
   }
+
+    /**
+   * Get completed tasks history
+   */
+    static async getCompletedTasksHistory(req: TAuthenticatedAdminRequest, res: Response, next: NextFunction): Promise<void> {
+      try {
+        const { task_id, hunt_id, status, page, limit } = req.query;
+        const completedTasks = await TaskService.getCompletedTasksHistory(hunt_id as string | null, task_id as string | null, status as TCompleteTaskStatus | null, parseInt(page as string) | 1, parseInt(limit as string) | 10);
+        ResponseHandler.success(res, completedTasks, "Completed tasks history retrieved successfully");
+      } catch (error) {
+        next(error);
+      }
+    }
+    static async updateCompletedTaskStatus(req: TAuthenticatedAdminRequest, res: Response, next: NextFunction): Promise<void> {
+      try {
+        const { completed_task_id, status } = req.body;
+        const completedTasks = await TaskService.updateCompletedTaskStatus(completed_task_id as string, status as TCompleteTaskStatus);
+        ResponseHandler.success(res, completedTasks, "Completed task status updated successfully");
+      } catch (error) {
+        next(error);
+      }
+    }
+
 }

@@ -12,9 +12,9 @@ export class StripeWebhookService {
     signature: string
   ): Promise<void> {
     try {
-      console.log("Stripe Raw Body👉=>", rawBody);
-      console.log("Stripe Signature👉=>", signature);
-      console.log("Stripe Webhook Secret👉=>", STRIPE_WEBHOOK_SECRET);
+      // console.log("Stripe Raw Body👉=>", rawBody);
+      // console.log("Stripe Signature👉=>", signature);
+      // console.log("Stripe Webhook Secret👉=>", STRIPE_WEBHOOK_SECRET);
       if (!STRIPE_WEBHOOK_SECRET) {
         throw new AppError('Stripe webhook secret not configured', 500);
       }

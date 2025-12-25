@@ -8,7 +8,7 @@ export class StripeWebhookService {
    * Verify and process Stripe webhook
    */
   static async processWebhook(
-    rawBody: Buffer,
+    rawBody: any,
     signature: string
   ): Promise<void> {
     try {
@@ -22,7 +22,7 @@ export class StripeWebhookService {
       // Verify webhook signature
       let event: Stripe.Event;
       try {
-        event = stripeClient.webhooks.constructEvent(rawBody,signature,STRIPE_WEBHOOK_SECRET);
+        event = stripeClient.webhooks.constructEvent(rawBody as Buffer,signature,STRIPE_WEBHOOK_SECRET);
       } catch (error: any) {
         console.error("Stripe Error👉=>", error);
         throw new AppError(`Webhook signature verification failed: ${error.message}`, 400);

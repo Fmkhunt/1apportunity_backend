@@ -8,6 +8,8 @@ export const serviceLocationValidation = {
     currency_sign: Joi.string().max(10).required(),
     map: Joi.string().max(50).required(),
     payment_gateway: Joi.string().max(50).required(),
+    coin_rate: Joi.number().required(),
+    token_rate: Joi.number().required(),
   }),
   update: Joi.object({
     country: Joi.string().max(100),
@@ -16,6 +18,8 @@ export const serviceLocationValidation = {
     currency_sign: Joi.string().max(10),
     map: Joi.string().max(50),
     payment_gateway: Joi.string().max(50),
+    coin_rate: Joi.number(),
+    token_rate: Joi.number(),
   }),
 
   query: Joi.object({

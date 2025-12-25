@@ -34,4 +34,6 @@ export class WalletController {
       next(error);
     }
   }
+
+  
 }

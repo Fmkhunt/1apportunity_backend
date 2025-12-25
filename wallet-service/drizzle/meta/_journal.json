@@ -22,6 +22,20 @@
       "when": 1761648340622,
       "tag": "0002_sour_steel_serpent",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1766663493546,
+      "tag": "0003_curly_junta",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1766667044060,
+      "tag": "0004_harsh_aaron_stack",
+      "breakpoints": true
     }
   ]
 }

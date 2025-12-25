@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { UsersTable, otpTable } from '../models/schema';
+import { ServiceLocationTable, UsersTable, otpTable } from '../models/schema';
 import { db } from '../config/database';
 import { eq, and, isNotNull, lt, gt } from 'drizzle-orm';
 import { UserModel } from '../models/Users';
@@ -44,10 +44,10 @@ export class AuthService {
 
     return { accessToken, refreshToken };
   }
+  
   /**
    * Register user
    */
-
   static async register(userData: TRegistrationData): Promise<any> {
     try {
       const { email, phone, otp, name, referral_by, device_token, ccode, country } = userData;
@@ -71,6 +71,10 @@ export class AuthService {
         }
       }
       const referral_code = await this.generateReferralCode();
+      const serviceLocation = await db.query.ServiceLocationTable.findFirst({where:eq(ServiceLocationTable.country, country)});
+      if (!serviceLocation) {
+        throw new AppError('Service location not found', 500);
+      }
       const newUser = await UserModel.create({
         email,
         phone,
@@ -79,6 +83,7 @@ export class AuthService {
         referral_code,
         ccode,
         country,
+        service_location_id: serviceLocation.id,
         status: 'active',
         token: 0,
       })
@@ -224,7 +229,7 @@ export class AuthService {
 
 
   private static async generateReferralCode(count: number = 0): Promise<string> {
-    
+
     const referralCode = 'TH' + generateRandomString(count > 5 ? 8 : 6).toUpperCase();
     const user = await db.query.UsersTable.findFirst({where:eq(UsersTable.referral_code, referralCode)});
     if (user) {

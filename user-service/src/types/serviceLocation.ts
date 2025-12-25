@@ -6,6 +6,8 @@ export type TServiceLocation = {
   currency_sign: string;
   map: string;
   payment_gateway: string;
+  coin_rate: string;
+  token_rate: string;
   created_at: Date;
   updated_at: Date;
 }
@@ -17,6 +19,8 @@ export type TServiceLocationCreate = {
   currency_sign: string;
   map: string;
   payment_gateway: string;
+  coin_rate: string;
+  token_rate: string;
 }
 
 export type TServiceLocationUpdate = {
@@ -26,4 +30,6 @@ export type TServiceLocationUpdate = {
   currency_sign?: string;
   map?: string;
   payment_gateway?: string;
+  coin_rate?: string;
+  token_rate?: string;
 }

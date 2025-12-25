@@ -64,6 +64,13 @@
       "when": 1764240567308,
       "tag": "0008_legal_wasp",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1766645409626,
+      "tag": "0009_glossy_dust",
+      "breakpoints": true
     }
   ]
 }

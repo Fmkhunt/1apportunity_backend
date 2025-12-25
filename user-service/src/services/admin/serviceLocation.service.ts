@@ -13,9 +13,12 @@ export interface TServiceLocationQueryParams {
   currency?: string;
   map?: string;
   payment_gateway?: string;
+  coin_rate?: string;
+  token_rate?: string;
 }
 
 export class ServiceLocationService {
+
   /**
    * Create a new service location
    */
@@ -25,13 +28,16 @@ export class ServiceLocationService {
       const existingServiceLocation = await db.query.ServiceLocationTable.findFirst({
         where: eq(ServiceLocationTable.country, serviceLocationData.country),
       });
-      
+
       if (existingServiceLocation) {
         throw new AppError('Service location with this country already exists', 400);
       }
 
       const [serviceLocation] = await db.insert(ServiceLocationTable).values({
         ...serviceLocationData,
+        coin_rate: serviceLocationData.coin_rate,
+        token_rate: serviceLocationData.token_rate,
+        created_at: new Date(),
         updated_at: new Date(),
       }).returning();
 
@@ -55,17 +61,17 @@ export class ServiceLocationService {
     totalPages: number;
   }> {
     try {
-      const { 
-        page = 1, 
-        limit = 10, 
-        search, 
-        country, 
-        timezone, 
-        currency, 
-        map, 
-        payment_gateway 
+      const {
+        page = 1,
+        limit = 10,
+        search,
+        country,
+        timezone,
+        currency,
+        map,
+        payment_gateway
       } = queryParams;
-      
+
       const offset = (page - 1) * limit;
 
       // Build where conditions
@@ -147,11 +153,11 @@ export class ServiceLocationService {
       const serviceLocation = await db.query.ServiceLocationTable.findFirst({
         where: eq(ServiceLocationTable.id, id),
       });
-      
+
       if (!serviceLocation) {
         throw new AppError('Service location not found', 404);
       }
-      
+
       return serviceLocation as TServiceLocation;
     } catch (error) {
       if (error instanceof AppError) {
@@ -170,7 +176,7 @@ export class ServiceLocationService {
       const existingServiceLocation = await db.query.ServiceLocationTable.findFirst({
         where: eq(ServiceLocationTable.id, id),
       });
-      
+
       if (!existingServiceLocation) {
         throw new AppError('Service location not found', 404);
       }
@@ -180,7 +186,7 @@ export class ServiceLocationService {
         const countryExists = await db.query.ServiceLocationTable.findFirst({
           where: eq(ServiceLocationTable.country, updateData.country),
         });
-        
+
         if (countryExists) {
           throw new AppError('Service location with this country already exists', 400);
         }
@@ -217,7 +223,7 @@ export class ServiceLocationService {
       const existingServiceLocation = await db.query.ServiceLocationTable.findFirst({
         where: eq(ServiceLocationTable.id, id),
       });
-      
+
       if (!existingServiceLocation) {
         throw new AppError('Service location not found', 404);
       }

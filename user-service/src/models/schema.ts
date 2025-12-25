@@ -1,5 +1,6 @@
-import { pgTable, text, timestamp, integer, boolean, varchar, jsonb, PgDateString, uuid } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, integer, boolean, varchar, jsonb, PgDateString, uuid, decimal } from 'drizzle-orm/pg-core';
 import  crypto from 'node:crypto';
+import { sql } from 'drizzle-orm';
 
 // Define schema
 export const UsersTable = pgTable('users', {
@@ -14,6 +15,7 @@ export const UsersTable = pgTable('users', {
   referral_code: varchar('referral_code', { length: 10 }).notNull().unique(),
   referral_by: varchar('referral_by', { length: 10 }).references(() => UsersTable.referral_code),
   status: varchar('status', { enum: ['active', 'inactive', 'pending'] }).default('pending'),
+  service_location_id: uuid('service_location_id').references(() => ServiceLocationTable.id),
   token: integer('token').default(0),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
@@ -49,6 +51,8 @@ export const ServiceLocationTable = pgTable('service_location', {
   currency_sign: varchar('currency_sign', { length: 10 }).notNull(),
   map: varchar('map', { length: 50 }).notNull(), // google, apple, etc.
   payment_gateway: varchar('payment_gateway', { length: 50 }).notNull(), // stripe, paypal, etc.
+  coin_rate: decimal('coin_rate', { precision: 10, scale: 4 }).notNull().default(`0.0000`),
+  token_rate: decimal('token_rate', { precision: 10, scale: 4 }).notNull().default(`0.0000`),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
 });

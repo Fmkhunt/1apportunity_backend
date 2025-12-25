@@ -17,6 +17,7 @@ export interface CreditWalletData {
   reference_type: string;
   reference_id: string;
   created_by: string;
+  payment_transaction_id?: string;
 }
 
 export class WalletService {
@@ -43,7 +44,7 @@ export class WalletService {
         .from(walletTable)
         .where(eq(walletTable.userId, userId))
         .limit(1);
-      
+
       return wallet || null;
     } catch (error) {
       throw new AppError(error.message, 500);
@@ -79,6 +80,14 @@ export class WalletService {
    */
   static async credit(creditData: CreditWalletData): Promise<TWallet> {
     try {
+      // Determine type based on reference_type
+      let transactionType = 'task';
+      if (creditData.reference_type === 'payment') {
+        transactionType = 'payment';
+      } else if (creditData.reference_type === 'referral') {
+        transactionType = 'referral';
+      }
+
       // Create credit transaction
       const [creditTransaction] = await db
         .insert(walletTable)
@@ -86,7 +95,8 @@ export class WalletService {
           userId: creditData.wallet_id, // This is actually the user ID
           coins: creditData.amount,
           transaction_type: 'credit',
-          type: 'task',
+          type: transactionType as any,
+          payment_transaction_id: creditData.payment_transaction_id || null,
           description: creditData.description,
           created_at: new Date(),
           updated_at: new Date(),

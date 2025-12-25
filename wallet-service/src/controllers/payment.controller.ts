@@ -87,11 +87,21 @@ export class PaymentController {
         paymentUrl = session.sessionUrl;
         sessionId = session.sessionId;
 
-        // Update transaction with session ID
-        await PaymentService.updatePaymentTransactionBySessionId(
-          sessionId,
-          'pending',
-          { sessionId }
+        // Update transaction with session ID and metadata
+        await PaymentService.updatePaymentTransactionById(
+          paymentTransactionId,
+          {
+            gatewaySessionId: sessionId,
+            status: 'pending',
+            metadata: {
+              sessionId: sessionId,
+              userId,
+              paymentType: payment_type,
+              quantity,
+              amount,
+              currency,
+            }
+          }
         );
       } else if (paymentGateway === 'razorpay') {
         const order = await PaymentService.createRazorpayOrder(
@@ -105,11 +115,21 @@ export class PaymentController {
         paymentUrl = order.paymentUrl;
         orderId = order.orderId;
 
-        // Update transaction with order ID
-        await PaymentService.updatePaymentTransaction(
-          orderId,
-          'pending',
-          { orderId }
+        // Update transaction with order ID and metadata
+        await PaymentService.updatePaymentTransactionById(
+          paymentTransactionId,
+          {
+            gatewayOrderId: orderId,
+            status: 'pending',
+            metadata: {
+              orderId: orderId,
+              userId,
+              paymentType: payment_type,
+              quantity,
+              amount,
+              currency,
+            }
+          }
         );
       }
 

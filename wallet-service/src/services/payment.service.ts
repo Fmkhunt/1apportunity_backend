@@ -255,6 +255,45 @@ export class PaymentService {
   }
 
   /**
+   * Update payment transaction by payment transaction ID
+   */
+  static async updatePaymentTransactionById(
+    paymentTransactionId: string,
+    updates: {
+      gatewaySessionId?: string;
+      gatewayOrderId?: string;
+      status?: 'pending' | 'success' | 'failed';
+      metadata?: any;
+    }
+  ): Promise<void> {
+    try {
+      const updateData: any = {
+        updated_at: new Date(),
+      };
+
+      if (updates.gatewaySessionId !== undefined) {
+        updateData.gateway_session_id = updates.gatewaySessionId;
+      }
+      if (updates.gatewayOrderId !== undefined) {
+        updateData.gateway_order_id = updates.gatewayOrderId;
+      }
+      if (updates.status !== undefined) {
+        updateData.status = updates.status;
+      }
+      if (updates.metadata !== undefined) {
+        updateData.metadata = updates.metadata;
+      }
+
+      await db
+        .update(paymentTransactionsTable)
+        .set(updateData)
+        .where(eq(paymentTransactionsTable.id, paymentTransactionId));
+    } catch (error: any) {
+      throw new AppError(`Failed to update payment transaction: ${error.message}`, 500);
+    }
+  }
+
+  /**
    * Update payment transaction by session ID (for Stripe)
    */
   static async updatePaymentTransactionBySessionId(

@@ -139,6 +139,8 @@ export class PaymentController {
   ): Promise<void> {
     try {
       const signature = req.headers['stripe-signature'] as string;
+      console.log("Stripe Signature👉=>", signature);
+      console.log("Stripe Body👉=>", req.body);
       if (!signature) {
         throw new AppError('Stripe signature header missing', 400);
       }

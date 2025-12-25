@@ -139,14 +139,12 @@ export class PaymentController {
   ): Promise<void> {
     try {
       const signature = req.headers['stripe-signature'] as string;
-      console.log("Stripe Signature👉=>", signature);
-      console.log("Stripe Body👉=>", req.body);
       if (!signature) {
         throw new AppError('Stripe signature header missing', 400);
       }
 
       // Get raw body (should be available from middleware)
-      const rawBody = req.body;
+      const rawBody = req.body; //(req as any).rawBody as Buffer;
       if (!rawBody) {
         throw new AppError('Raw body not available', 400);
       }

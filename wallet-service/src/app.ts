@@ -58,9 +58,27 @@ class App {
     // Compression middleware
     this.app.use(compression());
 
-    // Body parsing middleware
-    this.app.use(express.json({ limit: '10mb' }));
-    this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+    // Body parsing middleware (exclude webhook routes that need raw body)
+    // Skip JSON parsing for Stripe webhook - it needs raw body for signature verification
+    this.app.use((req: Request, res: Response, next: NextFunction) => {
+      // Skip JSON parsing for Stripe webhook route
+      if (req.originalUrl === '/api/payment/webhook/stripe' ||
+          req.path === '/api/payment/webhook/stripe' ||
+          req.originalUrl.startsWith('/api/payment/webhook/stripe')) {
+        return next();
+      }
+      express.json({ limit: '10mb' })(req, res, next);
+    });
+
+    this.app.use((req: Request, res: Response, next: NextFunction) => {
+      // Skip URL encoding for Stripe webhook route
+      if (req.originalUrl === '/api/payment/webhook/stripe' ||
+          req.path === '/api/payment/webhook/stripe' ||
+          req.originalUrl.startsWith('/api/payment/webhook/stripe')) {
+        return next();
+      }
+      express.urlencoded({ extended: true, limit: '10mb' })(req, res, next);
+    });
 
     // Rate limiting
     const limiter = rateLimit(authConfig.rateLimit);

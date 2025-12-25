@@ -205,7 +205,7 @@ export class PaymentService {
         .insert(paymentTransactionsTable)
         .values({
           userId: data.userId,
-          amount: (data.amount/1000).toFixed(4),
+          amount: (data.amount/1000).toFixed(4), //decimal
           currency: data.currency,
           quantity: data.quantity,
           payment_type: data.paymentType,

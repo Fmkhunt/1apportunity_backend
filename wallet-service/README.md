@@ -9,6 +9,7 @@ Wallet service for managing user wallets, tokens, and payment transactions.
 - Payment gateway integration (Stripe & Razorpay)
 - Payment transaction tracking
 - Webhook handling for payment events
+- Coin withdrawal system with admin approval
 
 ## Payment Gateway Integration
 
@@ -194,6 +195,183 @@ Tracks coin/credit transactions.
 - `created_at`: Timestamp
 - `updated_at`: Timestamp
 
+### withdrawals
+
+Tracks coin withdrawal requests.
+
+- `id`: UUID (Primary Key)
+- `user_id`: UUID (Foreign Key to users, indexed)
+- `coins`: Integer (Amount of coins to withdraw)
+- `conversion_rate`: Decimal (Rate used for conversion)
+- `currency`: String (Target currency)
+- `currency_amount`: Decimal (Calculated amount in currency)
+- `status`: Enum ('pending' | 'approved' | 'rejected', default: 'pending', indexed)
+- `rejection_reason`: Text (Nullable, reason if rejected)
+- `processed_by`: UUID (Nullable, admin who processed)
+- `processed_at`: Timestamp (Nullable)
+- `created_at`: Timestamp (indexed)
+- `updated_at`: Timestamp
+
+## Withdrawal System
+
+### Overview
+
+Users can request coin withdrawals which are subject to admin approval. Once approved, coins are deducted from both the wallet table and users table balance.
+
+### API Endpoints
+
+#### Create Withdrawal Request
+
+**POST** `/api/withdrawal/request`
+
+Create a withdrawal request for coins.
+
+**Headers:**
+```
+Authorization: Bearer <JWT_TOKEN>
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "coins": 1000  // Number of coins to withdraw (must be positive integer)
+}
+```
+
+**Response:**
+```json
+{
+  "data": {
+    "id": "uuid",
+    "userId": "uuid",
+    "coins": 1000,
+    "conversion_rate": "0.01",
+    "currency": "USD",
+    "currency_amount": "10.00",
+    "status": "pending",
+    "rejection_reason": null,
+    "processed_by": null,
+    "processed_at": null,
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:00:00Z"
+  },
+  "message": "Withdrawal request created successfully",
+  "success": true
+}
+```
+
+#### Get User Withdrawals
+
+**GET** `/api/withdrawal?page=1&limit=10`
+
+Get user's withdrawal history (paginated).
+
+**Headers:**
+```
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**Response:**
+```json
+{
+  "data": {
+    "withdrawals": [...],
+    "totalRecords": 50,
+    "page": 1,
+    "limit": 10
+  },
+  "message": "Withdrawals retrieved successfully",
+  "success": true
+}
+```
+
+#### Get Withdrawal by ID
+
+**GET** `/api/withdrawal/:id`
+
+Get specific withdrawal details.
+
+**Headers:**
+```
+Authorization: Bearer <JWT_TOKEN>
+```
+
+#### Admin: Get Pending Withdrawals
+
+**GET** `/api/admin/withdrawal/pending?page=1&limit=10`
+
+Get all pending withdrawal requests (admin only).
+
+**Headers:**
+```
+Authorization: Bearer <ADMIN_JWT_TOKEN>
+```
+
+#### Admin: Approve Withdrawal
+
+**POST** `/api/admin/withdrawal/:id/approve`
+
+Approve a withdrawal request (admin only). This will:
+- Update withdrawal status to 'approved'
+- Debit coins from wallet table
+- Deduct balance from users table via TRPC
+
+**Headers:**
+```
+Authorization: Bearer <ADMIN_JWT_TOKEN>
+```
+
+**Response:**
+```json
+{
+  "data": {
+    "id": "uuid",
+    "status": "approved",
+    "processed_by": "admin-uuid",
+    "processed_at": "2024-01-01T00:00:00Z",
+    ...
+  },
+  "message": "Withdrawal approved successfully",
+  "success": true
+}
+```
+
+#### Admin: Reject Withdrawal
+
+**POST** `/api/admin/withdrawal/:id/reject`
+
+Reject a withdrawal request (admin only).
+
+**Headers:**
+```
+Authorization: Bearer <ADMIN_JWT_TOKEN>
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "reason": "Insufficient documentation"  // Optional
+}
+```
+
+**Response:**
+```json
+{
+  "data": {
+    "id": "uuid",
+    "status": "rejected",
+    "rejection_reason": "Insufficient documentation",
+    "processed_by": "admin-uuid",
+    "processed_at": "2024-01-01T00:00:00Z",
+    ...
+  },
+  "message": "Withdrawal rejected successfully",
+  "success": true
+}
+```
+
 ## Payment Flow
 
 1. User requests payment session with count (quantity) and payment type (tokens/credits)
@@ -206,6 +384,21 @@ Tracks coin/credit transactions.
 8. Webhook handler verifies signature and updates transaction status
 9. Tokens or credits are credited to user's wallet (based on the count requested)
 10. Transaction status is updated to 'success' or 'failed'
+
+## Withdrawal Flow
+
+1. User requests withdrawal with coin amount
+2. System validates user has sufficient balance
+3. System fetches user's service location to get conversion rate and currency
+4. System calculates currency_amount = coins * coin_rate
+5. Withdrawal record is created with status 'pending'
+6. Admin views pending withdrawals
+7. Admin approves or rejects withdrawal
+8. If approved:
+   - Withdrawal status updated to 'approved'
+   - Coins debited from wallet table (transaction_type='debit', type='withdrawal')
+   - Balance deducted from users table via TRPC
+9. User can view withdrawal status (pending/approved/rejected)
 
 ## Mobile App Integration
 

@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { PaymentService, PaymentType } from '../services/payment.service';
+import { PaymentService } from '../services/payment.service';
 import { StripeWebhookService } from '../services/stripeWebhook.service';
 import { RazorpayWebhookService } from '../services/razorpayWebhook.service';
-import { TAuthenticatedRequest } from '../types';
+import { TAuthenticatedRequest, TPaymentType } from '../types';
 import { AppError } from '../utils/AppError';
 import { ResponseHandler } from '../utils/responseHandler';
 
@@ -23,7 +23,7 @@ export class PaymentController {
 
       const { count, payment_type } = req.body as {
         count: number;
-        payment_type: PaymentType;
+        payment_type: TPaymentType;
       };
 
       if (!count || count <= 0 || !Number.isInteger(count)) {

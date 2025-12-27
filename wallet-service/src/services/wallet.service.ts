@@ -1,24 +1,8 @@
 import { db } from '../config/database';
 import { walletTable } from '../models/schema';
-import { TWallet } from '../types';
+import { TWallet, TCreateWalletData, TCreditWalletData, TDebitWalletData } from '../types';
 import { desc, eq, and, sql } from 'drizzle-orm';
 import { AppError } from '../utils/AppError';
-
-export interface CreateWalletData {
-  user_id: string;
-  balance: number;
-  created_by: string;
-}
-
-export interface CreditWalletData {
-  wallet_id: string;
-  amount: number;
-  description: string;
-  reference_type: string;
-  reference_id: string;
-  created_by: string;
-  payment_transaction_id?: string;
-}
 
 export class WalletService {
   static async getLifetimeEarnings(userId: string): Promise<number> {
@@ -54,7 +38,7 @@ export class WalletService {
   /**
    * Create a new wallet for user
    */
-  static async create(walletData: CreateWalletData): Promise<TWallet> {
+  static async create(walletData: TCreateWalletData): Promise<TWallet> {
     try {
       const [newWallet] = await db
         .insert(walletTable)
@@ -78,7 +62,7 @@ export class WalletService {
   /**
    * Credit amount to wallet
    */
-  static async credit(creditData: CreditWalletData): Promise<TWallet> {
+  static async credit(creditData: TCreditWalletData): Promise<TWallet> {
     try {
       // Determine type based on reference_type
       let transactionType = 'task';
@@ -106,6 +90,42 @@ export class WalletService {
       console.log(`Credited ${creditData.amount} coins to user ${creditData.wallet_id}`);
 
       return creditTransaction;
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(error.message, 500);
+    }
+  }
+
+  /**
+   * Debit amount from wallet
+   */
+  static async debit(debitData: TDebitWalletData): Promise<TWallet> {
+    try {
+      // Determine type based on reference_type
+      let transactionType = 'task';
+      if (debitData.reference_type === 'withdrawal') {
+        transactionType = 'withdrawal';
+      }
+
+      // Create debit transaction
+      const [debitTransaction] = await db
+        .insert(walletTable)
+        .values({
+          userId: debitData.wallet_id, // This is actually the user ID
+          coins: debitData.amount,
+          transaction_type: 'debit',
+          type: transactionType as any,
+          description: debitData.description,
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+        .returning();
+
+      console.log(`Debited ${debitData.amount} coins from user ${debitData.wallet_id}`);
+
+      return debitTransaction;
     } catch (error) {
       if (error instanceof AppError) {
         throw error;

@@ -1,11 +1,15 @@
 import { Application } from 'express';
 import walletRoutes from './wallet.routes';
 import paymentRoutes from './payment.routes';
+import withdrawalRoutes from './withdrawal.routes';
+import adminWithdrawalRoutes from './admin/withdrawal.routes';
 
 export const setupRoutes = (app: Application): void => {
   // API routes
   app.use('/api/wallet', walletRoutes);
   app.use('/api/payment', paymentRoutes);
+  app.use('/api/withdrawal', withdrawalRoutes);
+  app.use('/api/admin/withdrawal', adminWithdrawalRoutes);
 
   // Health check route
   app.get('/health', (req, res) => {

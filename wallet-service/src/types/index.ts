@@ -106,3 +106,9 @@ export type TTaskQueryParams = {
 export type TAuthenticatedAdminRequest = Request & {
   admin?: TAdminJwtPayload;
 }
+
+// Export types from other type files
+export * from './withdrawal';
+export * from './payment';
+export * from './wallet';
+export * from './message';

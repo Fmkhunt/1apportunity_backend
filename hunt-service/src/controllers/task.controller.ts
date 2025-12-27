@@ -132,7 +132,7 @@ export class TaskController {
       if(!task) {
         ResponseHandler.notFound(res, "Task not found");
         return;
-      } 
+      }
       const isAlreadyCompleted = await TaskService.verifyAlreadyCompleted(userId, hunt_id, task_id);
       if(isAlreadyCompleted) {
         ResponseHandler.error(res, "Task already completed");
@@ -140,6 +140,16 @@ export class TaskController {
       }
       const completedTask = await TaskService.completeQRCodeMissionTask(userId, hunt_id, task);
       ResponseHandler.success(res, completedTask, "Task completed successfully");
+    } catch (error) {
+      next(error);
+    }
+  }
+  static async getLatestCompletedTask(req: TAuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const timestamp = req.query.timestamp as string;
+      const datetime = timestamp ? new Date(timestamp) : null;
+      const result = await TaskService.getLatestCompletedTask(datetime);
+      ResponseHandler.success(res, result, "Latest completed task retrieved successfully");
     } catch (error) {
       next(error);
     }

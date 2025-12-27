@@ -1,6 +1,6 @@
 import { db } from '../config/database';
 import { tasksTable, clueTasksTable, huntTasksTable, completeTaskTable, UsersTable, questionsTable } from '../models/schema';
-import { eq, and, or, like, desc, asc, sql, ilike, not, isNull, isNotNull } from 'drizzle-orm';
+import { eq, and, or, like, desc, asc, sql, ilike, not, isNull, isNotNull, gte, gt } from 'drizzle-orm';
 import { AppError } from '../utils/AppError';
 import {
   TTask,
@@ -828,6 +828,30 @@ export class TaskService {
           .returning();
         return completedTask;
       });
+    } catch (error) {
+      throw new AppError(error.message, 500);
+    }
+  }
+  static async getLatestCompletedTask(timestamp: Date): Promise<any> {
+    try {
+      const whereConditions = [];
+      if(timestamp) {
+        whereConditions.push(gte(completeTaskTable.created_at, timestamp));
+      }
+      whereConditions.push(eq(completeTaskTable.status, 'completed'));
+      whereConditions.push(gt(completeTaskTable.reward, 0));
+      const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
+      const list = await db.query.completeTaskTable.findMany({
+        where: whereClause,
+        orderBy: desc(completeTaskTable.created_at),
+        limit: 10,
+        with: {
+          user: true,
+          task: true,
+          hunt: true
+        },
+      });
+      return list;
     } catch (error) {
       throw new AppError(error.message, 500);
     }

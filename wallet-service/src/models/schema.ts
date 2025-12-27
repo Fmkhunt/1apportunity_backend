@@ -71,6 +71,28 @@ export const paymentTransactionsTable = pgTable('payment_transactions', {
   };
 });
 
+// Withdrawals table
+export const withdrawalsTable = pgTable('withdrawals', {
+  id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  user_id: uuid('user_id').notNull(),
+  coins: integer('coins').notNull(),
+  conversion_rate: decimal('conversion_rate', { precision: 10, scale: 4 }).notNull(),
+  currency: varchar('currency', { length: 10 }).notNull(),
+  currency_amount: decimal('currency_amount', { precision: 10, scale: 4 }).notNull(),
+  status: varchar('status', { enum: ['pending', 'approved', 'rejected'] }).notNull().default('pending'),
+  rejection_reason: text('rejection_reason'),
+  processed_by: uuid('processed_by'),
+  processed_at: timestamp('processed_at'),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+},(table) => {
+  return {
+    idx_withdrawal_user_id: index('idx_withdrawal_user_id').on(table.user_id),
+    idx_withdrawal_status: index('idx_withdrawal_status').on(table.status),
+    idx_withdrawal_created_at: index('idx_withdrawal_created_at').on(table.created_at),
+  };
+});
+
 // export const walletRelations = relations(walletTable, ({ many }) => ({
 //   user: one(usersTable, {
 //     fields: [walletTable.userId],

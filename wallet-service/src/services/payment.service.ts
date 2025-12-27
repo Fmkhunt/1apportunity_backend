@@ -6,42 +6,13 @@ import { stripeClient, PAYMENT_SUCCESS_URL, PAYMENT_FAILURE_URL } from '../confi
 import { razorpayClient } from '../config/payment';
 import { trpcUser } from '../trpc/client';
 import { WalletService } from './wallet.service';
-
-export type PaymentType = 'tokens' | 'credits';
-export type PaymentGateway = 'stripe' | 'razorpay';
-
-export interface ServiceLocation {
-  id: string;
-  payment_gateway: string;
-  token_rate: string;
-  coin_rate: string;
-  currency: string;
-  currency_sign: string;
-}
-
-export interface CreatePaymentSessionData {
-  userId: string;
-  amount: number; // Amount in smallest currency unit (cents/paise)
-  paymentType: PaymentType;
-}
-
-export interface PaymentTransactionData {
-  userId: string;
-  amount: number;
-  currency: string;
-  quantity: number;
-  paymentType: PaymentType;
-  paymentGateway: PaymentGateway;
-  gatewayOrderId?: string;
-  gatewaySessionId?: string;
-  metadata?: any;
-}
+import { TPaymentType, TPaymentGateway, TServiceLocation, TCreatePaymentSessionData, TPaymentTransactionData } from '../types/payment';
 
 export class PaymentService {
   /**
    * Get user's service location via TRPC
    */
-  static async getUserServiceLocation(userId: string): Promise<ServiceLocation> {
+  static async getUserServiceLocation(userId: string): Promise<TServiceLocation> {
     try {
       // Use TRPC to get user's service location
       const serviceLocation = await (trpcUser as any).user.getServiceLocation.query(userId) as {
@@ -119,7 +90,7 @@ export class PaymentService {
     amount: number,
     currency: string,
     quantity: number,
-    paymentType: PaymentType,
+    paymentType: TPaymentType,
     paymentTransactionId: string
   ): Promise<{ sessionUrl: string; sessionId: string }> {
     try {
@@ -166,7 +137,7 @@ export class PaymentService {
     amount: number,
     currency: string,
     quantity: number,
-    paymentType: PaymentType,
+    paymentType: TPaymentType,
     paymentTransactionId: string
   ): Promise<{ orderId: string; paymentUrl: string }> {
     try {
@@ -199,7 +170,7 @@ export class PaymentService {
   /**
    * Create payment transaction in database
    */
-  static async createPaymentTransaction(data: PaymentTransactionData): Promise<string> {
+  static async createPaymentTransaction(data: TPaymentTransactionData): Promise<string> {
     try {
       const [transaction] = await db
         .insert(paymentTransactionsTable)
@@ -350,7 +321,7 @@ export class PaymentService {
   }
 
   /**
-   * Credit tokens to user
+   * Credit tokens to user via TRPC call to user-service
    */
   static async creditTokensToUser(
     userId: string,
@@ -358,15 +329,18 @@ export class PaymentService {
     paymentTransactionId: string
   ): Promise<void> {
     try {
-      // This will be implemented in token.service.ts
-      // For now, we'll call it here
-      const { TokenService } = await import('./token.service');
-      await TokenService.creditTokens(
+      // Call user-service TRPC endpoint to increment tokens
+      const result = await (trpcUser as any).user.incrementTokens.mutate({
         userId,
         quantity,
         paymentTransactionId,
-        `Payment transaction ${paymentTransactionId}`
-      );
+      });
+
+      if (!result || !result.success) {
+        throw new AppError('Failed to increment tokens via TRPC', 500);
+      }
+
+      console.log(`Successfully credited ${quantity} tokens to user ${userId} via TRPC. New token count: ${result.newTokenCount}`);
     } catch (error: any) {
       throw new AppError(`Failed to credit tokens: ${error.message}`, 500);
     }

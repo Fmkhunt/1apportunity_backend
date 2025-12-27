@@ -1,4 +1,4 @@
-export interface IUserMaster {
+export type TIUserMaster = {
   email: string;
   password?: string;
   name: string;
@@ -16,4 +16,4 @@ export interface IUserMaster {
   deleted_at?: Date | null;
   createdAt?: Date;
   updatedAt?: Date;
-}
+};

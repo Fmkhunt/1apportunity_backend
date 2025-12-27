@@ -24,7 +24,7 @@ export class StripeWebhookService {
       try {
         event = stripeClient.webhooks.constructEvent(rawBody as Buffer,signature,STRIPE_WEBHOOK_SECRET);
       } catch (error: any) {
-        console.error("Stripe Error👉=>", error);
+        // console.error("Stripe Error👉=>", error);
         throw new AppError(`Webhook signature verification failed: ${error.message}`, 400);
       }
 
@@ -100,6 +100,7 @@ export class StripeWebhookService {
       // Credit tokens or coins based on payment type
       if (paymentType === 'tokens') {
         await PaymentService.creditTokensToUser(userId, quantity, paymentTransactionId);
+
       } else if (paymentType === 'credits') {
         await PaymentService.creditCoinsToUser(userId, quantity, paymentTransactionId);
       }

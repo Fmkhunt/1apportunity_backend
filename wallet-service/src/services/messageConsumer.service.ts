@@ -3,27 +3,7 @@ import { WalletService } from './wallet.service';
 import { db } from '../config/database';
 import { TokenWalletTable } from '../models/schema';
 import { AppError } from '../utils/AppError';
-// import { AppError } from '../utils/AppError';
-
-export interface WalletCreditMessage {
-  userId: string;
-  huntId: string;
-  taskId: string;
-  taskName: string;
-  huntName: string;
-  amount: number;
-  rank: number;
-  claimId?: string;
-  timestamp: Date;
-}
-
-export interface WalletTokenDebitMessage {
-  userId: string;
-  clueId: string;
-  token: number;
-  description?: string;
-  timestamp: Date;
-}
+import { TWalletCreditMessage, TWalletTokenDebitMessage } from '../types/message';
 
 export class MessageConsumerService {
   private static isConsuming = false;
@@ -52,7 +32,7 @@ export class MessageConsumerService {
 
           try {
             const content = message.content.toString();
-            const walletCreditMessage: WalletCreditMessage = JSON.parse(content);
+            const walletCreditMessage: TWalletCreditMessage = JSON.parse(content);
 
             console.log('Processing wallet credit message:', {
               userId: walletCreditMessage.userId,
@@ -70,10 +50,10 @@ export class MessageConsumerService {
 
           } catch (error) {
             console.error('Error processing wallet credit message:', error);
-            
+
             // Reject the message and requeue it
             channel.nack(message, false, true);
-            
+
             // Log the error for monitoring
             console.error('Message requeued due to processing error:', error);
           }
@@ -90,7 +70,7 @@ export class MessageConsumerService {
           if (!message) return;
           try {
             const content = message.content.toString();
-            const debitMessage: WalletTokenDebitMessage = JSON.parse(content);
+            const debitMessage: TWalletTokenDebitMessage = JSON.parse(content);
 
             console.log('Processing wallet token debit message:', {
               userId: debitMessage.userId,
@@ -131,7 +111,7 @@ export class MessageConsumerService {
   /**
    * Process wallet credit message
    */
-  private static async processWalletCredit(message: WalletCreditMessage): Promise<void> {
+  private static async processWalletCredit(message: TWalletCreditMessage): Promise<void> {
     try {
       // Credit the amount to the user's wallet
       await WalletService.credit({
@@ -142,7 +122,7 @@ export class MessageConsumerService {
         reference_id: message.taskId,
         created_by: 'system',
       });
-      
+
       console.log(`Successfully credited ${message.amount} coins to user ${message.userId} for task completion`);
 
     } catch (error) {

@@ -21,9 +21,10 @@ export class PaymentController {
         throw new AppError('User not authenticated', 401);
       }
 
-      const { count, payment_type } = req.body as {
+      const { count, payment_type, platform } = req.body as {
         count: number;
         payment_type: TPaymentType;
+        platform?: 'web' | 'mobile';
       };
 
       if (!count || count <= 0 || !Number.isInteger(count)) {
@@ -33,6 +34,9 @@ export class PaymentController {
       if (!payment_type || !['tokens', 'credits'].includes(payment_type)) {
         throw new AppError('Invalid payment type. Must be "tokens" or "credits"', 400);
       }
+
+      // Default to 'web' if platform not specified
+      const paymentPlatform = platform || 'mobile';
 
       // Get user's service location
       const serviceLocation = await PaymentService.getUserServiceLocation(userId);
@@ -73,36 +77,72 @@ export class PaymentController {
       let paymentUrl = '';
       let sessionId = '';
       let orderId = '';
+      let clientSecret = '';
+      let paymentIntentId = '';
 
-      // Create payment session/order based on gateway
+      // Create payment session/order based on gateway and platform
       if (paymentGateway === 'stripe') {
-        const session = await PaymentService.createStripeSession(
-          userId,
-          amount,
-          currency,
-          quantity,
-          payment_type,
-          paymentTransactionId
-        );
-        paymentUrl = session.sessionUrl;
-        sessionId = session.sessionId;
+        if (paymentPlatform === 'mobile') {
+          // Use Payment Intent for mobile/Flutter
+          const paymentIntent = await PaymentService.createStripePaymentIntent(
+            userId,
+            amount,
+            currency,
+            quantity,
+            payment_type,
+            paymentTransactionId
+          );
+          clientSecret = paymentIntent.clientSecret;
+          paymentIntentId = paymentIntent.paymentIntentId;
 
-        // Update transaction with session ID and metadata
-        await PaymentService.updatePaymentTransactionById(
-          paymentTransactionId,
-          {
-            gatewaySessionId: sessionId,
-            status: 'pending',
-            metadata: {
-              sessionId: sessionId,
-              userId,
-              paymentType: payment_type,
-              quantity,
-              amount,
-              currency,
+          // Update transaction with payment intent ID and metadata
+          await PaymentService.updatePaymentTransactionById(
+            paymentTransactionId,
+            {
+              paymentIntentId: paymentIntentId,
+              status: 'pending',
+              metadata: {
+                paymentIntentId: paymentIntentId,
+                userId,
+                paymentType: payment_type,
+                quantity,
+                amount,
+                currency,
+                platform: 'mobile',
+              }
             }
-          }
-        );
+          );
+        } else {
+          // Use Checkout Session for web
+          const session = await PaymentService.createStripeSession(
+            userId,
+            amount,
+            currency,
+            quantity,
+            payment_type,
+            paymentTransactionId
+          );
+          paymentUrl = session.sessionUrl;
+          sessionId = session.sessionId;
+
+          // Update transaction with session ID and metadata
+          await PaymentService.updatePaymentTransactionById(
+            paymentTransactionId,
+            {
+              gatewaySessionId: sessionId,
+              status: 'pending',
+              metadata: {
+                sessionId: sessionId,
+                userId,
+                paymentType: payment_type,
+                quantity,
+                amount,
+                currency,
+                platform: 'web',
+              }
+            }
+          );
+        }
       } else if (paymentGateway === 'razorpay') {
         const order = await PaymentService.createRazorpayOrder(
           userId,
@@ -128,22 +168,34 @@ export class PaymentController {
               quantity,
               amount,
               currency,
+              platform: paymentPlatform,
             }
           }
         );
       }
 
-      ResponseHandler.created(res, {
-        payment_url: paymentUrl,
-        session_id: sessionId || undefined,
-        order_id: orderId || undefined,
+      // Build response based on platform
+      const responseData: any = {
         gateway: paymentGateway,
         amount,
         currency,
         payment_type,
         quantity,
         payment_transaction_id: paymentTransactionId,
-      }, 'Payment session created successfully');
+      };
+
+      if (paymentGateway === 'stripe' && paymentPlatform === 'mobile') {
+        responseData.client_secret = clientSecret;
+        responseData.payment_intent_id = paymentIntentId;
+      } else if (paymentGateway === 'stripe' && paymentPlatform === 'web') {
+        responseData.payment_url = paymentUrl;
+        responseData.session_id = sessionId;
+      } else if (paymentGateway === 'razorpay') {
+        responseData.payment_url = paymentUrl;
+        responseData.order_id = orderId;
+      }
+
+      ResponseHandler.created(res, responseData, 'Payment session created successfully');
     } catch (error) {
       next(error);
     }

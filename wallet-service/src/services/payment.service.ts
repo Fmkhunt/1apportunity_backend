@@ -83,7 +83,7 @@ export class PaymentService {
   }
 
   /**
-   * Create Stripe Checkout Session
+   * Create Stripe Checkout Session (for web)
    */
   static async createStripeSession(
     userId: string,
@@ -119,13 +119,47 @@ export class PaymentService {
           paymentTransactionId,
         },
       });
-
+      console.log('Stripe session created:', session);
       return {
         sessionUrl: session.url || '',
         sessionId: session.id,
       };
     } catch (error: any) {
       throw new AppError(`Failed to create Stripe session: ${error.message}`, 500);
+    }
+  }
+
+  /**
+   * Create Stripe Payment Intent (for mobile/Flutter)
+   */
+  static async createStripePaymentIntent(
+    userId: string,
+    amount: number,
+    currency: string,
+    quantity: number,
+    paymentType: TPaymentType,
+    paymentTransactionId: string
+  ): Promise<{ clientSecret: string; paymentIntentId: string }> {
+    try {
+      const paymentIntent = await stripeClient.paymentIntents.create({
+        amount: amount, // Amount in smallest currency unit
+        currency: currency.toLowerCase(),
+        payment_method_types: ['card'],
+        metadata: {
+          userId,
+          paymentType,
+          quantity: quantity.toString(),
+          paymentTransactionId,
+        },
+        description: `Purchase ${quantity} ${paymentType}`,
+      });
+      console.log('Stripe Payment Intent created:', paymentIntent.id);
+      return {
+        clientSecret: paymentIntent.client_secret || '',
+        paymentIntentId: paymentIntent.id,
+      };
+    } catch (error: any) {
+      throw new AppError(`Failed to create Stripe Payment Intent: ${error.message}`, 500);
     }
   }
 
@@ -233,6 +267,7 @@ export class PaymentService {
     updates: {
       gatewaySessionId?: string;
       gatewayOrderId?: string;
+      paymentIntentId?: string;
       status?: 'pending' | 'success' | 'failed';
       metadata?: any;
     }
@@ -244,6 +279,9 @@ export class PaymentService {
 
       if (updates.gatewaySessionId !== undefined) {
         updateData.gateway_session_id = updates.gatewaySessionId;
+      }
+      if (updates.paymentIntentId !== undefined) {
+        updateData.gateway_session_id = updates.paymentIntentId; // Store payment intent ID in gateway_session_id field
       }
       if (updates.gatewayOrderId !== undefined) {
         updateData.gateway_order_id = updates.gatewayOrderId;
@@ -312,6 +350,45 @@ export class PaymentService {
         .select()
         .from(paymentTransactionsTable)
         .where(eq(paymentTransactionsTable.gateway_session_id, gatewaySessionId))
+        .limit(1);
+
+      return transaction || null;
+    } catch (error: any) {
+      throw new AppError(`Failed to get payment transaction: ${error.message}`, 500);
+    }
+  }
+
+  /**
+   * Update payment transaction by Payment Intent ID (for Stripe mobile)
+   */
+  static async updatePaymentTransactionByPaymentIntentId(
+    paymentIntentId: string,
+    status: 'pending' | 'success' | 'failed',
+    metadata?: any
+  ): Promise<void> {
+    try {
+      await db
+        .update(paymentTransactionsTable)
+        .set({
+          status,
+          metadata: metadata || undefined,
+          updated_at: new Date(),
+        })
+        .where(eq(paymentTransactionsTable.gateway_session_id, paymentIntentId));
+    } catch (error: any) {
+      throw new AppError(`Failed to update payment transaction: ${error.message}`, 500);
+    }
+  }
+
+  /**
+   * Get payment transaction by Payment Intent ID
+   */
+  static async getPaymentTransactionByPaymentIntentId(paymentIntentId: string) {
+    try {
+      const [transaction] = await db
+        .select()
+        .from(paymentTransactionsTable)
+        .where(eq(paymentTransactionsTable.gateway_session_id, paymentIntentId))
         .limit(1);
 
       return transaction || null;

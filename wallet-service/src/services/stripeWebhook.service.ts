@@ -42,6 +42,14 @@ export class StripeWebhookService {
           await this.handleCheckoutSessionFailed(event.data.object as Stripe.Checkout.Session);
           break;
 
+        case 'payment_intent.succeeded':
+          await this.handlePaymentIntentSucceeded(event.data.object as Stripe.PaymentIntent);
+          break;
+
+        case 'payment_intent.payment_failed':
+          await this.handlePaymentIntentFailed(event.data.object as Stripe.PaymentIntent);
+          break;
+
         default:
           console.log(`Unhandled event type: ${event.type}`);
       }
@@ -148,6 +156,104 @@ export class StripeWebhookService {
         throw error;
       }
       throw new AppError(`Failed to handle failed checkout session: ${error instanceof Error ? error.message : 'Unknown error'}`, 500);
+    }
+  }
+
+  /**
+   * Handle successful payment intent (for mobile/Flutter)
+   */
+  private static async handlePaymentIntentSucceeded(
+    paymentIntent: Stripe.PaymentIntent
+  ): Promise<void> {
+    try {
+      const metadata = paymentIntent.metadata;
+      if (!metadata) {
+        throw new AppError('Payment Intent metadata not found', 400);
+      }
+
+      const paymentTransactionId = metadata.paymentTransactionId;
+      const userId = metadata.userId;
+      const paymentType = metadata.paymentType as 'tokens' | 'credits';
+      const quantity = parseInt(metadata.quantity || '0', 10);
+
+      if (!paymentTransactionId || !userId || !paymentType || !quantity) {
+        throw new AppError('Invalid payment intent metadata', 400);
+      }
+
+      // Update payment transaction status
+      await PaymentService.updatePaymentTransactionByPaymentIntentId(
+        paymentIntent.id,
+        'success',
+        {
+          paymentIntentId: paymentIntent.id,
+          customerId: paymentIntent.customer,
+          amount: paymentIntent.amount,
+          currency: paymentIntent.currency,
+        }
+      );
+
+      // Get the payment transaction to verify it hasn't been processed
+      const transaction = await PaymentService.getPaymentTransactionByPaymentIntentId(paymentIntent.id);
+      if (!transaction) {
+        throw new AppError('Payment transaction not found', 404);
+      }
+
+      // Check if already processed (idempotency)
+      if (transaction.status === 'success') {
+        console.log(`Payment transaction ${paymentTransactionId} already processed`);
+        return;
+      }
+
+      // Credit tokens or coins based on payment type
+      if (paymentType === 'tokens') {
+        await PaymentService.creditTokensToUser(userId, quantity, paymentTransactionId);
+      } else if (paymentType === 'credits') {
+        await PaymentService.creditCoinsToUser(userId, quantity, paymentTransactionId);
+      }
+
+      console.log(`Successfully processed payment intent: ${paymentIntent.id} for user ${userId}`);
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(`Failed to handle payment intent: ${error instanceof Error ? error.message : 'Unknown error'}`, 500);
+    }
+  }
+
+  /**
+   * Handle failed payment intent (for mobile/Flutter)
+   */
+  private static async handlePaymentIntentFailed(
+    paymentIntent: Stripe.PaymentIntent
+  ): Promise<void> {
+    try {
+      const metadata = paymentIntent.metadata;
+      if (!metadata) {
+        throw new AppError('Payment Intent metadata not found', 400);
+      }
+
+      const paymentTransactionId = metadata.paymentTransactionId;
+
+      if (!paymentTransactionId) {
+        throw new AppError('Payment transaction ID not found in metadata', 400);
+      }
+
+      // Update payment transaction status to failed
+      await PaymentService.updatePaymentTransactionByPaymentIntentId(
+        paymentIntent.id,
+        'failed',
+        {
+          paymentIntentId: paymentIntent.id,
+          failureReason: paymentIntent.last_payment_error?.message || 'Payment failed',
+        }
+      );
+
+      console.log(`Payment intent failed for transaction: ${paymentTransactionId}`);
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(`Failed to handle failed payment intent: ${error instanceof Error ? error.message : 'Unknown error'}`, 500);
     }
   }
 }

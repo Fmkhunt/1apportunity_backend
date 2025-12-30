@@ -12,5 +12,9 @@ export const paymentValidation = {
       'any.only': 'Payment type must be either "tokens" or "credits"',
       'any.required': 'Payment type is required',
     }),
+    platform: Joi.string().valid('web', 'mobile').optional().messages({
+      'string.base': 'Platform must be a string',
+      'any.only': 'Platform must be either "web" or "mobile"',
+    }),
   }),
 };

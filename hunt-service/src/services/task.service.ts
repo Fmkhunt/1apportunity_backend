@@ -521,6 +521,7 @@ export class TaskService {
           })
           .where(eq(UsersTable.id, userId))
         }
+        await HuntClaimService.checkAndCompleteHuntClaim(userId, huntId);
         return completedTask;
       });
     } catch (error) {
@@ -547,6 +548,8 @@ export class TaskService {
             updated_at: new Date(),
           })
           .returning();
+          await HuntClaimService.checkAndCompleteHuntClaim(userId, huntId);
+
         return completedTask;
       });
     } catch (error) {
@@ -577,6 +580,7 @@ export class TaskService {
             updated_at: new Date(),
           })
           .returning();
+        await HuntClaimService.checkAndCompleteHuntClaim(userId, huntId);
 
         return completedTask;
       });
@@ -826,6 +830,8 @@ export class TaskService {
             updated_at: new Date(),
           })
           .returning();
+        await HuntClaimService.checkAndCompleteHuntClaim(userId, huntId);
+
         return completedTask;
       });
     } catch (error) {

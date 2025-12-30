@@ -1,5 +1,5 @@
 import { db } from '../config/database';
-import { huntsTable, huntClaimTable } from '../models/schema';
+import { huntsTable, huntClaimTable, huntTasksTable, completeTaskTable } from '../models/schema';
 import { eq, and,gt, or, like, desc, asc, sql, getTableColumns,isNull, isNotNull } from 'drizzle-orm';
 import { AppError } from '../utils/AppError';
 import {
@@ -87,7 +87,7 @@ export class HuntClaimService {
 
       return result[0];
     } catch (error) {
-      console.error("Error in huntClaimService.updateStatus=>", error); 
+      console.error("Error in huntClaimService.updateStatus=>", error);
       throw new AppError(error.message, 500);
     }
   }
@@ -126,7 +126,7 @@ export class HuntClaimService {
       throw new AppError(error.message, 500);
     }
   }
-  
+
   static async completeHuntClaim(huntClaimId: string, hunt_id: string, task_id: string, claimData: any): Promise<THuntClaim> {
     try {
       const result = await db
@@ -176,6 +176,66 @@ export class HuntClaimService {
     } catch (error) {
       console.error("Error in huntClaimService.getHuntHistory=>", error);
       throw new AppError(error.message, 500);
+    }
+  }
+
+  /**
+   * Check if all tasks in a hunt are completed for a user and update completed_at if so
+   */
+  static async checkAndCompleteHuntClaim(userId: string, huntId: string): Promise<void> {
+    try {
+      // Get all tasks for this hunt
+      const allTasks = await db
+        .select({ task_id: huntTasksTable.task_id })
+        .from(huntTasksTable)
+        .where(eq(huntTasksTable.hunt_id, huntId));
+
+      if (allTasks.length === 0) {
+        // No tasks in this hunt, nothing to check
+        return;
+      }
+
+      // Get all completed tasks for this user in this hunt (with status 'completed')
+      const completedTasks = await db
+        .select({ task_id: completeTaskTable.task_id })
+        .from(completeTaskTable)
+        .where(
+          and(
+            eq(completeTaskTable.hunt_id, huntId),
+            eq(completeTaskTable.user_id, userId),
+            eq(completeTaskTable.status, 'completed')
+          )
+        );
+
+      // Check if all tasks are completed
+      const allTaskIds = allTasks.map(t => t.task_id);
+      const completedTaskIds = completedTasks.map(t => t.task_id);
+      const allCompleted = allTaskIds.every(taskId => completedTaskIds.includes(taskId));
+
+      if (allCompleted) {
+        // All tasks are completed, update hunt_claim with completed_at
+        const huntClaim = await this.findMyHuntClaim(huntId, userId);
+        if (huntClaim && !huntClaim.completed_at) {
+          // Only update if completed_at is not already set
+          await db
+            .update(huntClaimTable)
+            .set({
+              status: 'completed',
+              completed_at: new Date(),
+              updated_at: new Date(),
+            })
+            .where(
+              and(
+                eq(huntClaimTable.hunt_id, huntId),
+                eq(huntClaimTable.user_id, userId)
+              )
+            );
+          console.log(`Hunt claim ${huntClaim.id} marked as completed - all tasks completed for user ${userId} in hunt ${huntId}`);
+        }
+      }
+    } catch (error) {
+      console.error("Error in huntClaimService.checkAndCompleteHuntClaim=>", error);
+      // Don't throw error, just log it - we don't want to fail task completion if this check fails
     }
   }
 }

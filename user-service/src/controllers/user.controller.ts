@@ -3,8 +3,8 @@ import { UserService } from '../services/user.service';
 import { ResponseHandler } from '../utils/responseHandler';
 import { TAuthenticatedRequest } from '../types';
 import { AppError } from '../utils/AppError';
-import { ZoneService } from '@/services/admin/zone.service';
-import { ServiceLocationService } from '@/services/admin/serviceLocation.service';
+import { ZoneService } from '../services/admin/zone.service';
+import { ServiceLocationService } from '../services/admin/serviceLocation.service';
 
 export class UserController {
 
@@ -19,7 +19,7 @@ export class UserController {
     //   if (!user) {
     //     throw new AppError('User not found', 404);
     //   }
-      
+
       ResponseHandler.success(res, req.user, 'Profile retrieved successfully');
     } catch (error) {
       next(error);
@@ -33,6 +33,19 @@ export class UserController {
       const zone = await ZoneService.getZoneByCoordinates(latitude, longitude);
       const service_location = await ServiceLocationService.getServiceLocationById(zone?.service_location_id);
       ResponseHandler.success(res, {user, zone, service_location}, 'Profile retrieved successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Get current user's service location
+   */
+  static async getServiceLocation(req: TAuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+
+      const serviceLocation = await UserService.getUserServiceLocation(req.user.id);
+      ResponseHandler.success(res, serviceLocation, 'Service location retrieved successfully');
     } catch (error) {
       next(error);
     }

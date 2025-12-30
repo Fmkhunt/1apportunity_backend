@@ -7,31 +7,31 @@ import { serviceLocationValidation } from '../../validations/serviceLocationVali
 const router = Router();
 
 // Service Location routes
-router.post('/', 
-  authenticateAdminToken, 
-  validateRequest(serviceLocationValidation.create), 
+router.post('/',
+  authenticateAdminToken,
+  validateRequest(serviceLocationValidation.create),
   ServiceLocationController.createServiceLocation
 );
 
-router.get('/', 
-  authenticateAdminToken, 
-  validateQuery(serviceLocationValidation.query), 
+router.get('/',
+  authenticateAdminToken,
+  validateQuery(serviceLocationValidation.query),
   ServiceLocationController.getAllServiceLocations
 );
 
-router.get('/:id', 
-  authenticateAdminToken, 
+router.get('/:id',
+  authenticateAdminToken,
   ServiceLocationController.getServiceLocationById
 );
 
-router.put('/:id', 
-  authenticateAdminToken, 
-  validateRequest(serviceLocationValidation.update), 
+router.put('/:id',
+  authenticateAdminToken,
+  validateRequest(serviceLocationValidation.update),
   ServiceLocationController.updateServiceLocation
 );
 
-router.delete('/:id', 
-  authenticateAdminToken, 
+router.delete('/:id',
+  authenticateAdminToken,
   ServiceLocationController.deleteServiceLocation
 );
 

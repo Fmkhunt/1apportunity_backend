@@ -10,5 +10,6 @@ import { authValidation } from '../validations/authValidation';
 const router = Router();
 
 router.get('/profile', authenticateJWT, requireActiveUser, UserController.getProfile);
+router.get('/service-location', authenticateJWT, requireActiveUser, UserController.getServiceLocation);
 
 export default router;

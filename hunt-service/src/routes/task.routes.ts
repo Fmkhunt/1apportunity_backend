@@ -11,6 +11,7 @@ router.post('/complete', authenticateJWT, validateRequest(taskValidation.complet
 router.post('/complete-mission', authenticateJWT, validateRequest(taskValidation.completeMissionTask), TaskController.completeMissionTask);
 router.post('/complete-qr-code-mission', authenticateJWT, validateRequest(taskValidation.completeQRCodeMissionTask), TaskController.completeQRCodeMissionTask);
 router.get('/latest-completed-task', authenticateJWT, TaskController.getLatestCompletedTask);
+router.get('/completed-task-List', authenticateJWT, TaskController.getCompletedTaskList);
 router.get('/:taskId', authenticateJWT, TaskController.getTask);
 
 export default router;

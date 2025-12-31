@@ -862,4 +862,34 @@ export class TaskService {
       throw new AppError(error.message, 500);
     }
   }
+  static async getCompletedTaskList(userId: string, page: number, limit: number): Promise<any> {
+    try {
+      const offset = (page - 1) * limit;
+      const whereConditions = [];
+      whereConditions.push(eq(completeTaskTable.user_id, userId));
+      const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
+      const list = await db.query.completeTaskTable.findMany({
+        where: whereClause,
+        orderBy: desc(completeTaskTable.created_at),
+        limit: limit,
+        offset: offset,
+        with: {
+          task: true,
+          hunt: true
+        },
+      });
+      const totalRecords = await db.select({ count: sql<number>`count(*)` }).from(completeTaskTable).where(whereClause);
+      const totalPages = Math.ceil(Number(totalRecords[0]?.count) / limit);
+      return {
+        list: list as unknown as TCompleteTask[],
+        totalRecords: Number(totalRecords[0]?.count),
+        page: page,
+        limit: limit,
+        totalPages: totalPages,
+      };
+    } catch (error) {
+      console.error('Error fetching completed task list:', error);
+      throw new AppError(error.message, 500);
+    }
+  }
 }

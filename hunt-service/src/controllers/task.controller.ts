@@ -154,4 +154,14 @@ export class TaskController {
       next(error);
     }
   }
+  static async getCompletedTaskList(req: TAuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { page, limit } = req.query;
+      const userId = req.user?.userId;
+      const result = await TaskService.getCompletedTaskList(userId, parseInt(page as string) | 1, parseInt(limit as string) | 10);
+      ResponseHandler.success(res, result, "Completed task list retrieved successfully");
+    } catch (error) {
+      next(error);
+    }
+  }
 }

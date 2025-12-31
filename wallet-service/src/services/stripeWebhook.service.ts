@@ -77,7 +77,8 @@ export class StripeWebhookService {
       const userId = metadata.userId;
       const paymentType = metadata.paymentType as 'tokens' | 'credits';
       const quantity = parseInt(metadata.quantity || '0', 10);
-
+      const amount = session.amount_total;
+      const currency = session.currency;
       if (!paymentTransactionId || !userId || !paymentType || !quantity) {
         throw new AppError('Invalid session metadata', 400);
       }
@@ -107,7 +108,7 @@ export class StripeWebhookService {
 
       // Credit tokens or coins based on payment type
       if (paymentType === 'tokens') {
-        await PaymentService.creditTokensToUser(userId, quantity, paymentTransactionId);
+        await PaymentService.creditTokensToUser(userId, quantity, paymentTransactionId, amount, currency);
 
       } else if (paymentType === 'credits') {
         await PaymentService.creditCoinsToUser(userId, quantity, paymentTransactionId);
@@ -166,6 +167,7 @@ export class StripeWebhookService {
     paymentIntent: Stripe.PaymentIntent
   ): Promise<void> {
     try {
+      console.log('Handle payment intent succeeded:', paymentIntent);
       const metadata = paymentIntent.metadata;
       if (!metadata) {
         throw new AppError('Payment Intent metadata not found', 400);
@@ -175,7 +177,8 @@ export class StripeWebhookService {
       const userId = metadata.userId;
       const paymentType = metadata.paymentType as 'tokens' | 'credits';
       const quantity = parseInt(metadata.quantity || '0', 10);
-
+      const amount = paymentIntent.amount;
+      const currency = paymentIntent.currency;
       if (!paymentTransactionId || !userId || !paymentType || !quantity) {
         throw new AppError('Invalid payment intent metadata', 400);
       }
@@ -206,7 +209,7 @@ export class StripeWebhookService {
 
       // Credit tokens or coins based on payment type
       if (paymentType === 'tokens') {
-        await PaymentService.creditTokensToUser(userId, quantity, paymentTransactionId);
+        await PaymentService.creditTokensToUser(userId, quantity, paymentTransactionId, amount, currency);
       } else if (paymentType === 'credits') {
         await PaymentService.creditCoinsToUser(userId, quantity, paymentTransactionId);
       }

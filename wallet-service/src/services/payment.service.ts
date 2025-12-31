@@ -1,5 +1,5 @@
 import { db } from '../config/database';
-import { paymentTransactionsTable } from '../models/schema';
+import { TokenWalletTable, paymentTransactionsTable } from '../models/schema';
 import { eq } from 'drizzle-orm';
 import { AppError } from '../utils/AppError';
 import { stripeClient, PAYMENT_SUCCESS_URL, PAYMENT_FAILURE_URL } from '../config/payment';
@@ -403,16 +403,30 @@ export class PaymentService {
   static async creditTokensToUser(
     userId: string,
     quantity: number,
-    paymentTransactionId: string
+    paymentTransactionId: string,
+    amount: number,
+    currency: string
   ): Promise<void> {
     try {
       // Call user-service TRPC endpoint to increment tokens
+      console.log('Credit tokens to user:', userId, quantity, paymentTransactionId);
+      // add transaction to token wallet
+      await db.insert(TokenWalletTable).values({
+        userId,
+        token: quantity,
+        transaction_type: 'credit',
+        payment_transaction_id: paymentTransactionId,
+        description: `Purchase ${quantity} tokens for ${amount / 100} ${currency}`,
+        created_at: new Date(),
+        updated_at: new Date(),
+      });
       const result = await (trpcUser as any).user.incrementTokens.mutate({
         userId,
         quantity,
         paymentTransactionId,
       });
 
+      console.log('Result:', result);
       if (!result || !result.success) {
         throw new AppError('Failed to increment tokens via TRPC', 500);
       }

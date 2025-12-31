@@ -29,6 +29,8 @@ export class StripeWebhookService {
       }
 
       // Handle different event types
+      console.log('Stripe Webhook Event👉=>', event);
+      console.log('Stripe Webhook Event Type👉=>', event.type);
       switch (event.type) {
         case 'checkout.session.completed':
           await this.handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
@@ -202,13 +204,13 @@ export class StripeWebhookService {
       }
 
       // Check if already processed (idempotency)
-      // if (transaction.status === 'success') {
-      //   console.log(`Payment transaction ${paymentTransactionId} already processed`);
-      //   return;
-      // }
+      if (transaction.status === 'success') {
+        console.log(`Payment transaction ${paymentTransactionId} already processed`);
+        return;
+      }
 
       // Credit tokens or coins based on payment type
-      console.log('Credit tokens or coins based on payment type:', paymentType);
+      // console.log('Credit tokens or coins based on payment type:', paymentType);
       if (paymentType === 'tokens') {
         await PaymentService.creditTokensToUser(userId, quantity, paymentTransactionId, amount, currency);
       } else if (paymentType === 'credits') {

@@ -29,7 +29,6 @@ export class StripeWebhookService {
       }
 
       // Handle different event types
-      console.log('Stripe Webhook Event👉=>', event);
       console.log('Stripe Webhook Event Type👉=>', event.type);
       switch (event.type) {
         case 'checkout.session.completed':
@@ -169,7 +168,6 @@ export class StripeWebhookService {
     paymentIntent: Stripe.PaymentIntent
   ): Promise<void> {
     try {
-      console.log('Handle payment intent succeeded:', paymentIntent);
       const metadata = paymentIntent.metadata;
       if (!metadata) {
         throw new AppError('Payment Intent metadata not found', 400);
@@ -185,17 +183,6 @@ export class StripeWebhookService {
         throw new AppError('Invalid payment intent metadata', 400);
       }
 
-      // Update payment transaction status
-      await PaymentService.updatePaymentTransactionByPaymentIntentId(
-        paymentIntent.id,
-        'success',
-        {
-          paymentIntentId: paymentIntent.id,
-          customerId: paymentIntent.customer,
-          amount: paymentIntent.amount,
-          currency: paymentIntent.currency,
-        }
-      );
 
       // Get the payment transaction to verify it hasn't been processed
       const transaction = await PaymentService.getPaymentTransactionByPaymentIntentId(paymentIntent.id);
@@ -208,6 +195,17 @@ export class StripeWebhookService {
         console.log(`Payment transaction ${paymentTransactionId} already processed`);
         return;
       }
+      // Update payment transaction status
+      await PaymentService.updatePaymentTransactionByPaymentIntentId(
+        paymentIntent.id,
+        'success',
+        {
+          paymentIntentId: paymentIntent.id,
+          customerId: paymentIntent.customer,
+          amount: paymentIntent.amount,
+          currency: paymentIntent.currency,
+        }
+      );
 
       // Credit tokens or coins based on payment type
       // console.log('Credit tokens or coins based on payment type:', paymentType);

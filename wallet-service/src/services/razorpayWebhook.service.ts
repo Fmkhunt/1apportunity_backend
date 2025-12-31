@@ -164,7 +164,7 @@ export class RazorpayWebhookService {
 
       // Credit tokens or coins based on payment type
       if (paymentType === 'tokens') {
-        await PaymentService.creditTokensToUser(userId, quantity, paymentTransactionId);
+        await PaymentService.creditTokensToUser(userId, quantity, paymentTransactionId, payment.amount, payment.currency);
       } else if (paymentType === 'credits') {
         await PaymentService.creditCoinsToUser(userId, quantity, paymentTransactionId);
       }

@@ -311,7 +311,6 @@ export class PaymentService {
     metadata?: any
   ): Promise<void> {
     try {
-      console.log('Update payment transaction by session ID👉=>', gatewaySessionId, status, metadata);
       await db
         .update(paymentTransactionsTable)
         .set({
@@ -368,7 +367,6 @@ export class PaymentService {
     metadata?: any
   ): Promise<void> {
     try {
-      console.log('Update payment transaction by payment intent ID👉=>', paymentIntentId, status, metadata);
       await db
         .update(paymentTransactionsTable)
         .set({

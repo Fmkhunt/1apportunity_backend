@@ -202,12 +202,13 @@ export class StripeWebhookService {
       }
 
       // Check if already processed (idempotency)
-      if (transaction.status === 'success') {
-        console.log(`Payment transaction ${paymentTransactionId} already processed`);
-        return;
-      }
+      // if (transaction.status === 'success') {
+      //   console.log(`Payment transaction ${paymentTransactionId} already processed`);
+      //   return;
+      // }
 
       // Credit tokens or coins based on payment type
+      console.log('Credit tokens or coins based on payment type:', paymentType);
       if (paymentType === 'tokens') {
         await PaymentService.creditTokensToUser(userId, quantity, paymentTransactionId, amount, currency);
       } else if (paymentType === 'credits') {

@@ -20,6 +20,9 @@ export class AuthService {
    * Generate JWT tokens
    */
   private static generateTokens(userId: string ): TTokenResponse {
+    console.log('Generate tokens👉=>', userId);
+    console.log('Generate expiresIn=>', authConfig.jwt.expiresIn);
+    console.log('Generate refreshExpiresIn=>', authConfig.jwt.refreshExpiresIn);
     const accessTokenPayload = { userId, role:"user", tokenType: 'accessToken' as const };
     const refreshTokenPayload = { userId, role:"user", tokenType: 'refreshToken' as const };
     const accessToken = (jwt.sign as any)(
@@ -44,7 +47,7 @@ export class AuthService {
 
     return { accessToken, refreshToken };
   }
-  
+
   /**
    * Register user
    */

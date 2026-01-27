@@ -119,7 +119,7 @@ export type TTask = {
   status: 'active' | 'inactive';
   created_by: string;
   updated_by: string;
-  type: 'mission' | 'question';
+  type: 'mission' | 'question' | 'qr_code';
   claim_id?: string | null;
   created_at?: Date;
   updated_at?: Date;
@@ -132,7 +132,7 @@ export type TCreateTaskData = {
   duration: string;
   reward: number;
   status?: 'active' | 'inactive';
-  type?: 'mission' | 'question';
+  type?: 'mission' | 'question' | 'qr_code';
   claim_id?: string;
   created_by: string;
   updated_by: string;
@@ -161,7 +161,7 @@ export type TTaskQueryParams = {
   limit?: number;
   status?: 'active' | 'inactive';
   search?: string;
-  type?: 'mission' | 'question';
+  type?: 'mission' | 'question' | 'qr_code';
 }
 
 // Clue related types

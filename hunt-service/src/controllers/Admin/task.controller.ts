@@ -302,8 +302,8 @@ export class TaskController {
    */
     static async getCompletedTasksHistory(req: TAuthenticatedAdminRequest, res: Response, next: NextFunction): Promise<void> {
       try {
-        const { task_id, hunt_id, status, page, limit } = req.query;
-        const completedTasks = await TaskService.getCompletedTasksHistory(hunt_id as string | null, task_id as string | null, status as TCompleteTaskStatus | null, parseInt(page as string) | 1, parseInt(limit as string) | 10);
+        const { task_id, hunt_id, status, page, limit, type } = req.query;
+        const completedTasks = await TaskService.getCompletedTasksHistory(hunt_id as string | null, task_id as string | null, status as TCompleteTaskStatus | null, parseInt(page as string) | 1, parseInt(limit as string) | 10, type as 'mission' | 'question' | 'qr_code' | undefined);
         ResponseHandler.success(res, completedTasks, "Completed tasks history retrieved successfully");
       } catch (error) {
         next(error);

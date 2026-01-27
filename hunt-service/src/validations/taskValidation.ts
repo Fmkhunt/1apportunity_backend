@@ -81,6 +81,7 @@ export const taskValidation = {
     status: Joi.string().valid('pending', 'completed', 'rejected', 'failed').optional(),
     page: Joi.number().integer().min(1).default(1),
     limit: Joi.number().integer().min(1).max(100).default(10),
+    type: Joi.string().valid('mission', 'question', 'qr_code').optional(),
   }),
 
   updateCompletedTaskStatus: Joi.object({

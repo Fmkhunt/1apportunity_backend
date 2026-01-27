@@ -1,6 +1,6 @@
 import { db } from '../config/database';
-import { tasksTable, clueTasksTable, huntTasksTable, completeTaskTable, UsersTable, questionsTable } from '../models/schema';
-import { eq, and, or, like, desc, asc, sql, ilike, not, isNull, isNotNull, gte, gt } from 'drizzle-orm';
+import { tasksTable, clueTasksTable, huntTasksTable, completeTaskTable, UsersTable, questionsTable, huntsTable } from '../models/schema';
+import { eq, and, or, like, desc, asc, sql, ilike, not, isNull, isNotNull, gte, gt, getTableColumns } from 'drizzle-orm';
 import { AppError } from '../utils/AppError';
 import {
   TTask,
@@ -13,7 +13,7 @@ import {
 } from '../types';
 import { QuestionService } from './question.service';
 import { HuntClaimService } from './huntClaim.service';
-import { trpc } from '../trpc/client';
+import { trpc, trpcUser } from '../trpc/client';
 import { MessagePublisherService } from './messagePublisher.service';
 import { HuntService } from './hunt.service';
 
@@ -617,7 +617,7 @@ export class TaskService {
     }
   }
 
-  static async getCompletedTasksHistory(huntId: string | null, taskId: string | null, status: TCompleteTaskStatus | null, page: number, limit: number): Promise<any> {
+  static async getCompletedTasksHistory(huntId: string | null, taskId: string | null, status: TCompleteTaskStatus | null, page: number, limit: number, taskType: string | null): Promise<any> {
     try {
       const offset = (page - 1) * limit;
       const whereConditions = [];
@@ -630,12 +630,59 @@ export class TaskService {
       if(status) {
         whereConditions.push(eq(completeTaskTable.status, status));
       }
+      // if(taskType) {
+      //   whereConditions.push(eq(tasksTable.type, taskType as 'mission' | 'question'));
+      // }
       const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
-      const completedTasks = await db.select().from(completeTaskTable).where(whereClause).orderBy(desc(completeTaskTable.created_at)).limit(limit).offset(offset);
+      // const completedTasks = await db.query.completeTaskTable.findMany({
+      //   where: whereClause,
+      //   orderBy: desc(completeTaskTable.created_at),
+      //   limit: limit,
+      //   offset: offset,
+      //   with: {
+      //     user: true,
+      //     task: true,
+      //     hunt: true,
+      //   },
+      // });
+      const completedTasks = await db.select({
+        ...getTableColumns(completeTaskTable),
+        task:getTableColumns(tasksTable),
+        user:getTableColumns(UsersTable),
+        hunt:getTableColumns(huntsTable)
+      }).from(completeTaskTable).where(whereClause)
+      .innerJoin(tasksTable, eq(completeTaskTable.task_id, tasksTable.id))
+      .innerJoin(huntsTable, eq(completeTaskTable.hunt_id, huntsTable.id))
+      .innerJoin(UsersTable, eq(completeTaskTable.user_id, UsersTable.id))
+      .orderBy(desc(completeTaskTable.created_at))
+      .limit(limit)
+      .offset(offset);
+
       const totalRecords = await db.select({ count: sql<number>`count(*)` }).from(completeTaskTable).where(and(...whereConditions));
       const totalPages = Math.ceil(Number(totalRecords[0]?.count) / limit);
+
+      // // Fetch completing users in a single tRPC call
+      // const userIds = Array.from(new Set(completedTasks.map((t: any) => t.user_id).filter(Boolean)));
+      // let usersMap = new Map<string, { id: string; name: string; email: string; phone: string; profile: string | null }>();
+      // if (userIds.length > 0) {
+      //   try {
+      //     const users = await (trpcUser as any).user.getByIds.query({ ids: userIds });
+      //     users.forEach((u: { id: string; name: string; email: string; phone: string; profile: string | null }) => {
+      //       usersMap.set(u.id, u);
+      //     });
+      //   } catch (error) {
+      //     console.error('Error fetching users for completed tasks history:', error);
+      //     // Continue without user data if user-service is unavailable
+      //   }
+      // }
+
+      // const listWithUsers = (completedTasks as any[]).map((t) => ({
+      //   ...t,
+      //   user: t.user_id ? (usersMap.get(t.user_id) || null) : null,
+      // }));
+
       return {
-        list: completedTasks as unknown as TCompleteTask[],
+        list: completedTasks,
         totalRecords: Number(totalRecords[0]?.count),
         page: page,
         limit: limit,

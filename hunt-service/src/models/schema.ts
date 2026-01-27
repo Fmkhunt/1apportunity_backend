@@ -12,7 +12,7 @@ export const tasksTable = pgTable('tasks', {
   duration:time('duration').notNull(),
   reward:integer('reward').notNull(),
   status:varchar('status', { enum: ['active', 'inactive'] }).default('active'),
-  type:varchar('type', { enum: ['mission', 'question'] }).default('mission'),
+  type:varchar('type', { enum: ['mission', 'question', 'qr_code'] }).default('mission'),
   claim_id: uuid('claim_id').references(() => claimsTable.id),
   created_by: uuid('created_by'),
   updated_by: uuid('updated_by'),

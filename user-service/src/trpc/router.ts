@@ -2,7 +2,7 @@ import { initTRPC } from '@trpc/server';
 import { z } from 'zod';
 import { db } from '../config/database';
 import { AdminTable, ZoneTable, UsersTable, ServiceLocationTable } from '../models/schema';
-import { eq, sql, getTableColumns } from 'drizzle-orm';
+import { eq, sql, getTableColumns, inArray } from 'drizzle-orm';
 import { Context } from './context';
 
 const t = initTRPC.context<Context>().create();
@@ -258,6 +258,29 @@ export const appRouter = router({
         } catch (error) {
           console.error('Error deducting balance:', error);
           throw new Error(`Failed to deduct balance: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      }),
+    getByIds: publicProcedure
+      .input(z.object({
+        ids: z.array(z.string().uuid()).min(1),
+      }))
+      .query(async ({ input }) => {
+        try {
+          const users = await db
+            .select({
+              id: UsersTable.id,
+              name: UsersTable.name,
+              email: UsersTable.email,
+              phone: UsersTable.phone,
+              profile: UsersTable.profile,
+            })
+            .from(UsersTable)
+            .where(inArray(UsersTable.id, input.ids));
+
+          return users;
+        } catch (error) {
+          console.error('Error fetching users by IDs:', error);
+          throw new Error(`Failed to get users: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
       }),
   }),

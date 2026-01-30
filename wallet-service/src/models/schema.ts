@@ -2,9 +2,25 @@ import { pgTable, text, timestamp, integer, varchar, jsonb, uuid, time, unique, 
 import  crypto from 'node:crypto';
 import { relations } from "drizzle-orm";
 
-// Clue related schema
+// users related schema
+export const usersTable = pgTable('users', {
+  id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  name: varchar('name', { length: 150 }).notNull(),
+  phone: varchar('phone', { length: 15 }).notNull(),
+  ccode: varchar('ccode', { length: 10 }).notNull(),
+  country: varchar('country', { length: 100 }).notNull(),
+  profile: varchar('profile', { length: 255 }).default(''),
+  balance: integer('balance').default(0),
+  referral_code: varchar('referral_code', { length: 10 }).notNull().unique(),
+  referral_by: varchar('referral_by'),
+  status: varchar('status', { enum: ['active', 'inactive', 'pending'] }).default('pending'),
+  token: integer('token').default(0),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+});
 
-// Define schema
+// wallet related schema
 export const walletTable = pgTable('wallet', {
   id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   userId: uuid('user_id').notNull(),

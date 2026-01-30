@@ -1,6 +1,6 @@
 import { db } from '../config/database';
-import { withdrawalsTable } from '../models/schema';
-import { eq, desc, and, sql } from 'drizzle-orm';
+import { usersTable, withdrawalsTable } from '../models/schema';
+import { eq, desc, and, sql, getTableColumns } from 'drizzle-orm';
 import { AppError } from '../utils/AppError';
 import { PaymentService } from './payment.service';
 import { WalletService } from './wallet.service';
@@ -147,14 +147,26 @@ export class WithdrawalService {
   /**
    * Get all pending withdrawals (for admin)
    */
-  static async getPendingWithdrawals(page: number, limit: number): Promise<TWithdrawalListResponse> {
+  static async getPendingWithdrawals(page: number, limit: number): Promise<any> {
     try {
       const offset = (page - 1) * limit;
 
       // Get pending withdrawals
+      // join with users table
       const withdrawals = await db
-        .select()
+        .select({
+          ...getTableColumns(withdrawalsTable),
+          user:{
+            id: usersTable.id,
+            name: usersTable.name,
+            phone: usersTable.phone,
+            ccode: usersTable.ccode,
+            country: usersTable.country,
+            profile: usersTable.profile,
+          },
+        })
         .from(withdrawalsTable)
+        .leftJoin(usersTable, eq(withdrawalsTable.user_id, usersTable.id))
         .where(eq(withdrawalsTable.status, 'pending'))
         .orderBy(desc(withdrawalsTable.created_at))
         .offset(offset)
@@ -167,7 +179,7 @@ export class WithdrawalService {
         .where(eq(withdrawalsTable.status, 'pending'));
 
       return {
-        withdrawals: withdrawals as TWithdrawal[],
+        withdrawals: withdrawals,
         totalRecords: Number(totalRecords[0]?.count) || 0,
         page,
         limit,
